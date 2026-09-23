@@ -18,7 +18,7 @@ import subprocess
 import sys
 import time
 from typing import Any, Dict, List, Optional
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -28,7 +28,7 @@ from engine.cloud_engine import cloud_engine, get_api_key, save_api_key_to_env
 from engine.memory import memory_engine
 
 # Graceful optional loading of heavy local PyTorch engines
-# This allows El GPT to run in lightweight cloud environments (Render, Railway, Fly.io)
+# This allows El GPT to run in lightweight cloud environments (Vercel, Render, Railway)
 # with 0% memory bloat, while still supporting local Apple Silicon MPS when available.
 try:
     import torch
@@ -44,13 +44,14 @@ except Exception as e:
     LOCAL_PYTORCH_AVAILABLE = False
     print(f"[Server] Running in Cloud-Optimized Mode (Local PyTorch engine not initialized: {e})")
 
-app = FastAPI(title="El GPT Cloud & Neural Studio")
+app = FastAPI(title="El GPT Cloud & Neural Studio", redirect_slashes=False)
 
+# Robust CORS configuration supporting all methods & preflights without credentials collision
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS", "HEAD", "PUT", "DELETE"],
     allow_headers=["*"],
 )
 
@@ -105,12 +106,12 @@ class ChatMessage(BaseModel):
 
 class ChatRequest(BaseModel):
     messages: List[ChatMessage]
-    model_id: str = Field(default="el-gpt-cloud-llama-70b")
+    model_id: str = Field(default="el-gpt-cloud-120b")
     temperature: float = Field(default=0.6, ge=0.0, le=2.0)
     top_k: int = Field(default=40, ge=0, le=100)
     top_p: float = Field(default=0.9, ge=0.0, le=1.0)
     max_new_tokens: int = Field(default=1024, ge=10, le=4096)
-    api_key: Optional[str] = None  # User-provided Groq API Key from frontend
+    api_key: Optional[str] = None
 
 
 class CloudKeyRequest(BaseModel):
@@ -129,19 +130,42 @@ class MemoryAddRequest(BaseModel):
     memory: str
 
 
+# Explicit OPTIONS preflight handler covering all possible paths
+@app.options("/api/chat")
+@app.options("/api/chat/")
+@app.options("/chat")
+@app.options("/chat/")
+@app.options("/")
+async def options_handler():
+    return Response(
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS, HEAD",
+            "Access-Control-Allow-Headers": "*",
+        },
+    )
+
+
 @app.get("/api/cloud/status")
+@app.get("/api/cloud/status/")
+@app.get("/cloud/status")
+@app.get("/cloud/status/")
 async def get_cloud_status():
     """Returns status of cloud AI engine and whether an API key is configured."""
     has_key = bool(get_api_key())
     return {
         "cloud_enabled": True,
         "has_server_api_key": has_key,
-        "default_cloud_model": "el-gpt-cloud-llama-70b",
+        "default_cloud_model": "el-gpt-cloud-120b",
         "models": cloud_engine.get_models_metadata(),
     }
 
 
 @app.post("/api/cloud/key")
+@app.post("/api/cloud/key/")
+@app.post("/cloud/key")
+@app.post("/cloud/key/")
 async def set_cloud_key(req: CloudKeyRequest):
     """Saves or updates the Groq API key in the server's .env file."""
     success = save_api_key_to_env(req.api_key)
@@ -153,12 +177,18 @@ async def set_cloud_key(req: CloudKeyRequest):
 
 
 @app.get("/api/memory")
+@app.get("/api/memory/")
+@app.get("/memory")
+@app.get("/memory/")
 async def get_memories():
     """Returns stored user preferences and long-term memories."""
     return {"memories": memory_engine.get_memories()}
 
 
 @app.post("/api/memory")
+@app.post("/api/memory/")
+@app.post("/memory")
+@app.post("/memory/")
 async def add_memory(req: MemoryAddRequest):
     """Adds a new persistent memory."""
     success = memory_engine.add_memory(req.memory)
@@ -166,6 +196,9 @@ async def add_memory(req: MemoryAddRequest):
 
 
 @app.delete("/api/memory/{idx}")
+@app.delete("/api/memory/{idx}/")
+@app.delete("/memory/{idx}")
+@app.delete("/memory/{idx}/")
 async def delete_memory(idx: int):
     """Deletes a memory item by index."""
     success = memory_engine.delete_memory(idx)
@@ -173,6 +206,9 @@ async def delete_memory(idx: int):
 
 
 @app.post("/api/memory/clear")
+@app.post("/api/memory/clear/")
+@app.post("/memory/clear")
+@app.post("/memory/clear/")
 async def clear_memories():
     """Clears all stored memories."""
     memory_engine.clear_memories()
@@ -180,6 +216,9 @@ async def clear_memories():
 
 
 @app.get("/api/models")
+@app.get("/api/models/")
+@app.get("/models")
+@app.get("/models/")
 async def get_models():
     """Returns metadata about active models including Cloud and Local options."""
     all_models = []
@@ -245,7 +284,7 @@ async def get_models():
         device_str = "Cloud Infrastructure"
 
     return {
-        "active_default": "el-gpt-cloud-llama-70b",
+        "active_default": "el-gpt-cloud-120b",
         "device": device_str,
         "local_available": LOCAL_PYTORCH_AVAILABLE,
         "has_cloud_key": bool(get_api_key()),
@@ -253,7 +292,12 @@ async def get_models():
     }
 
 
+# Multiple path decorators so any Vercel rewrite or direct path matches without 405 error
 @app.post("/api/chat")
+@app.post("/api/chat/")
+@app.post("/chat")
+@app.post("/chat/")
+@app.post("/")
 async def chat_endpoint(req: ChatRequest):
     """
     Streaming SSE endpoint delivering tokens in real time to the ChatGPT UI.
@@ -345,10 +389,19 @@ async def chat_endpoint(req: ChatRequest):
 
         yield "data: [DONE]\n\n"
 
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache, no-transform",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @app.post("/api/train/start")
+@app.post("/api/train/start/")
 async def start_training(req: TrainRequest):
     """Triggers background model training with chosen scale."""
     if not LOCAL_PYTORCH_AVAILABLE:
@@ -367,6 +420,7 @@ async def start_training(req: TrainRequest):
 
 
 @app.get("/api/train/status")
+@app.get("/api/train/status/")
 async def get_training_status():
     """Returns real-time telemetry from active training run."""
     if not LOCAL_PYTORCH_AVAILABLE:
@@ -375,6 +429,7 @@ async def get_training_status():
 
 
 @app.post("/api/train/stop")
+@app.post("/api/train/stop/")
 async def stop_training():
     """Gracefully interrupts active training run."""
     if not LOCAL_PYTORCH_AVAILABLE:
@@ -390,6 +445,7 @@ class RunCodeRequest(BaseModel):
 
 
 @app.post("/api/run-code")
+@app.post("/api/run-code/")
 async def run_code(req: RunCodeRequest):
     """Executes a code snippet (Python or JS) safely and returns stdout/stderr."""
     lang = req.language.lower().strip()
@@ -454,9 +510,12 @@ async def run_code(req: RunCodeRequest):
         }
 
 
-# Mount frontend / public static directory
-public_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "public")
-frontend_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
-static_dir = public_dir if os.path.exists(public_dir) else frontend_dir
-if os.path.exists(static_dir):
-    app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
+# Mount frontend / public static directory ONLY when running locally
+# On Vercel, public/ is served directly at the Edge CDN.
+# Mounting StaticFiles at '/' on Vercel would intercept unmatched POST requests and return 405.
+if not os.environ.get("VERCEL"):
+    public_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "public")
+    frontend_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
+    static_dir = public_dir if os.path.exists(public_dir) else frontend_dir
+    if os.path.exists(static_dir):
+        app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
