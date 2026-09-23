@@ -1,7 +1,7 @@
 """
-User Long-Term Memory & Preferences Engine for El GPT 1.5.
-Stores, updates, and formats persistent user preferences in data/user_memory.json.
-Allows El GPT 1.5 to remember user preferences across sessions (just like ChatGPT).
+User Long-Term Memory & Preferences Engine for El GPT.
+Stores, updates, and formats persistent user preferences.
+Safely handles serverless/read-only environments (such as Vercel).
 """
 
 import json
@@ -9,8 +9,8 @@ import os
 import re
 from typing import List, Optional
 
-
-MEMORY_FILE = "data/user_memory.json"
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MEMORY_FILE = os.path.join(ROOT_DIR, "data", "user_memory.json")
 
 DEFAULT_MEMORIES = [
     "User prefers clean, modern code formatting with clear comments.",
@@ -22,20 +22,29 @@ DEFAULT_MEMORIES = [
 class MemoryEngine:
     def __init__(self, filepath: str = MEMORY_FILE):
         self.filepath = filepath
+        self._in_memory_cache: List[str] = list(DEFAULT_MEMORIES)
         self._ensure_storage()
 
     def _ensure_storage(self):
-        os.makedirs(os.path.dirname(self.filepath), exist_ok=True)
-        if not os.path.exists(self.filepath):
-            with open(self.filepath, "w", encoding="utf-8") as f:
-                json.dump(DEFAULT_MEMORIES, f, indent=2)
+        try:
+            os.makedirs(os.path.dirname(self.filepath), exist_ok=True)
+            if not os.path.exists(self.filepath):
+                with open(self.filepath, "w", encoding="utf-8") as f:
+                    json.dump(DEFAULT_MEMORIES, f, indent=2)
+        except Exception:
+            # Running in read-only environment (e.g. Vercel / AWS Lambda)
+            pass
 
     def get_memories(self) -> List[str]:
         try:
-            with open(self.filepath, "r", encoding="utf-8") as f:
-                return json.load(f)
+            if os.path.exists(self.filepath):
+                with open(self.filepath, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    self._in_memory_cache = list(data)
+                    return data
         except Exception:
-            return list(DEFAULT_MEMORIES)
+            pass
+        return list(self._in_memory_cache)
 
     def add_memory(self, memory: str) -> bool:
         clean = memory.strip()
@@ -59,8 +68,14 @@ class MemoryEngine:
         self._save([])
 
     def _save(self, memories: List[str]):
-        with open(self.filepath, "w", encoding="utf-8") as f:
-            json.dump(memories, f, indent=2, ensure_ascii=False)
+        self._in_memory_cache = list(memories)
+        try:
+            os.makedirs(os.path.dirname(self.filepath), exist_ok=True)
+            with open(self.filepath, "w", encoding="utf-8") as f:
+                json.dump(memories, f, indent=2, ensure_ascii=False)
+        except Exception:
+            # Fallback for read-only environments
+            pass
 
     def extract_implicit_memory(self, user_message: str) -> Optional[str]:
         """Detects if user is asking the model to remember something."""

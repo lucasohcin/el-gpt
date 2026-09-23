@@ -109,9 +109,9 @@ document.addEventListener("DOMContentLoaded", () => {
   let pollInterval = null;
   let canvasCtx = lossCanvas ? lossCanvas.getContext("2d") : null;
   let userGroqKey = localStorage.getItem("el_gpt_groq_key") || "";
-  let currentModelId = localStorage.getItem("el_gpt_model_id") || "el-gpt-cloud-llama-70b";
-  if (currentModelId === "el-gpt-pro" || currentModelId === "el-gpt-1-5-pro") {
-    currentModelId = "el-gpt-cloud-llama-70b"; // Default to blazing-fast cloud model
+  let currentModelId = localStorage.getItem("el_gpt_model_id") || "el-gpt-cloud-120b";
+  if (currentModelId === "el-gpt-pro" || currentModelId === "el-gpt-1-5-pro" || currentModelId === "el-gpt-cloud-llama-70b") {
+    currentModelId = "el-gpt-cloud-120b"; // Default to 120B cloud model
   }
   let isDeepReasoning = true;
   let activeLiveCode = "";
@@ -165,30 +165,24 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    if (modelId === "el-gpt-cloud-llama-70b") {
-      currentModelName.textContent = "El GPT Cloud 70B";
+    if (modelId === "el-gpt-cloud-120b" || modelId === "el-gpt-cloud-llama-70b") {
+      currentModelName.textContent = "El GPT Cloud 120B";
       currentModelTag.textContent = "⚡ 450 tps Cloud";
       currentModelTag.className = "model-tag cloud-badge-lightning";
-      if (heroTitle) heroTitle.textContent = "El GPT Cloud 70B";
-      if (heroSubtitle) heroSubtitle.textContent = "Powered by Llama 3.3 70B in the cloud. Blazing speed (450+ tok/s), 0% Mac CPU, master-level coding, math & reasoning.";
-    } else if (modelId === "el-gpt-cloud-deepseek-r1") {
-      currentModelName.textContent = "El GPT DeepSeek R1";
-      currentModelTag.textContent = "⚡ Reasoning Cloud";
-      currentModelTag.className = "model-tag cloud-badge";
-      if (heroTitle) heroTitle.textContent = "El GPT DeepSeek R1";
-      if (heroSubtitle) heroSubtitle.textContent = "State-of-the-art Deep Reasoning Engine. Step-by-step chain-of-thought proofs, advanced logic, algorithms & coding.";
-    } else if (modelId === "el-gpt-cloud-qwen-32b") {
-      currentModelName.textContent = "El GPT Qwen 2.5 32B";
+      if (heroTitle) heroTitle.textContent = "El GPT Cloud 120B";
+      if (heroSubtitle) heroSubtitle.textContent = "Flagship 120 Billion parameter model in the cloud. Blazing speed (450+ tok/s), 0% Mac CPU, master-level coding, math & reasoning.";
+    } else if (modelId === "el-gpt-cloud-qwen-27b" || modelId === "el-gpt-cloud-qwen-32b") {
+      currentModelName.textContent = "El GPT Qwen 3.8 27B";
       currentModelTag.textContent = "⚡ 400 tps Cloud";
       currentModelTag.className = "model-tag cloud-badge";
-      if (heroTitle) heroTitle.textContent = "El GPT Qwen 2.5 32B";
-      if (heroSubtitle) heroSubtitle.textContent = "Elite Coding and Multilingual Engine. Superior HTML/CSS/JS web development & math.";
-    } else if (modelId === "el-gpt-cloud-llama-8b") {
-      currentModelName.textContent = "El GPT Cloud Instant";
+      if (heroTitle) heroTitle.textContent = "El GPT Qwen 3.8 27B";
+      if (heroSubtitle) heroSubtitle.textContent = "Elite Coding and Multilingual Engine. Superior HTML5/CSS3/JS web development & math.";
+    } else if (modelId === "el-gpt-cloud-20b" || modelId === "el-gpt-cloud-llama-8b") {
+      currentModelName.textContent = "El GPT Cloud Fast 20B";
       currentModelTag.textContent = "⚡ 750 tps Ultra-Speed";
       currentModelTag.className = "model-tag cloud-badge";
-      if (heroTitle) heroTitle.textContent = "El GPT Cloud Instant";
-      if (heroSubtitle) heroSubtitle.textContent = "Ultra-high speed 8B model. Near-instantaneous streaming (750+ tokens/sec) for rapid conversation.";
+      if (heroTitle) heroTitle.textContent = "El GPT Cloud Fast 20B";
+      if (heroSubtitle) heroSubtitle.textContent = "Ultra-high speed 20B model. Near-instantaneous streaming (750+ tokens/sec) for rapid conversation.";
     } else if (modelId === "el-gpt-1-8-ultra") {
       currentModelName.textContent = "El GPT 1.8 Ultra";
       currentModelTag.textContent = "1B Local MPS";
