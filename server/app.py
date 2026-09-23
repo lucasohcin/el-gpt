@@ -116,6 +116,7 @@ class ChatRequest(BaseModel):
 
 class CloudKeyRequest(BaseModel):
     api_key: str
+    provider: Optional[str] = "groq"
 
 
 class TrainRequest(BaseModel):
@@ -152,11 +153,14 @@ async def options_handler():
 @app.get("/cloud/status")
 @app.get("/cloud/status/")
 async def get_cloud_status():
-    """Returns status of cloud AI engine and whether an API key is configured."""
-    has_key = bool(get_api_key())
+    """Returns status of cloud AI engine and whether API keys are configured."""
+    has_groq = bool(get_api_key(provider="groq"))
+    has_openrouter = bool(get_api_key(provider="openrouter"))
     return {
         "cloud_enabled": True,
-        "has_server_api_key": has_key,
+        "has_server_api_key": has_groq or has_openrouter,
+        "has_groq_key": has_groq,
+        "has_openrouter_key": has_openrouter,
         "default_cloud_model": "el-gpt-cloud-120b",
         "models": cloud_engine.get_models_metadata(),
     }
@@ -167,12 +171,12 @@ async def get_cloud_status():
 @app.post("/cloud/key")
 @app.post("/cloud/key/")
 async def set_cloud_key(req: CloudKeyRequest):
-    """Saves or updates the Groq API key in the server's .env file."""
-    success = save_api_key_to_env(req.api_key)
+    """Saves or updates API keys in the server's .env file."""
+    success = save_api_key_to_env(req.api_key, provider=req.provider or "groq")
     return {
         "success": success,
         "message": "API Key saved successfully to server!" if success else "Failed to save API key.",
-        "has_server_api_key": bool(get_api_key()),
+        "has_server_api_key": bool(get_api_key(provider="groq")) or bool(get_api_key(provider="openrouter")),
     }
 
 

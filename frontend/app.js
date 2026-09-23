@@ -94,12 +94,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const closeCloudKeyBtn = document.getElementById("closeCloudKeyBtn");
   const cloudKeyModal = document.getElementById("cloudKeyModal");
   const groqApiKeyInput = document.getElementById("groqApiKeyInput");
+  const openRouterApiKeyInput = document.getElementById("openRouterApiKeyInput");
   const saveCloudKeyBtn = document.getElementById("saveCloudKeyBtn");
   const clearCloudKeyBtn = document.getElementById("clearCloudKeyBtn");
   const cloudKeyBtnText = document.getElementById("cloudKeyBtnText");
   const cloudStatusIndicator = document.getElementById("cloudStatusIndicator");
   const cloudStatusText = document.getElementById("cloudStatusText");
   const toggleApiKeyVisibilityBtn = document.getElementById("toggleApiKeyVisibilityBtn");
+  const toggleOrApiKeyVisibilityBtn = document.getElementById("toggleOrApiKeyVisibilityBtn");
 
   // State
   let conversations = JSON.parse(localStorage.getItem("el_gpt_chats") || "[]");
@@ -108,9 +110,10 @@ document.addEventListener("DOMContentLoaded", () => {
   let abortController = null;
   let pollInterval = null;
   let userGroqKey = localStorage.getItem("el_gpt_groq_key") || "";
+  let userOpenRouterKey = localStorage.getItem("el_gpt_openrouter_key") || "";
   let currentModelId = localStorage.getItem("el_gpt_model_id") || "el-gpt-cloud-120b";
-  // On web/cloud deployments, always default to the Cloud 120B model
-  if (!currentModelId.startsWith("el-gpt-cloud-")) {
+  // On web/cloud deployments, default to Cloud 120B model if an invalid local model was saved
+  if (!currentModelId.startsWith("el-gpt-cloud-") && !currentModelId.startsWith("el-gpt-or-")) {
     currentModelId = "el-gpt-cloud-120b";
     localStorage.setItem("el_gpt_model_id", currentModelId);
   }
@@ -180,10 +183,28 @@ document.addEventListener("DOMContentLoaded", () => {
       if (heroSubtitle) heroSubtitle.textContent = "Elite Coding and Multilingual Engine. Superior HTML5/CSS3/JS web development & math.";
     } else if (modelId === "el-gpt-cloud-20b" || modelId === "el-gpt-cloud-llama-8b") {
       currentModelName.textContent = "El GPT Cloud Fast 20B";
-      currentModelTag.textContent = "⚡ 750 tps Ultra-Speed";
+      currentModelTag.textContent = "⚡ 750 tps Groq";
       currentModelTag.className = "model-tag cloud-badge";
       if (heroTitle) heroTitle.textContent = "El GPT Cloud Fast 20B";
-      if (heroSubtitle) heroSubtitle.textContent = "Ultra-high speed 20B model. Near-instantaneous streaming (750+ tokens/sec) for rapid conversation.";
+      if (heroSubtitle) heroSubtitle.textContent = "Ultra-high speed 20B model on Groq. Near-instantaneous streaming (750+ tokens/sec) for rapid conversation.";
+    } else if (modelId === "el-gpt-or-nemotron-120b") {
+      currentModelName.textContent = "Nemotron 3 Super 120B";
+      currentModelTag.textContent = "🌐 OpenRouter Free";
+      currentModelTag.className = "model-tag cloud-badge";
+      if (heroTitle) heroTitle.textContent = "Nemotron 3 Super 120B";
+      if (heroSubtitle) heroSubtitle.textContent = "Nvidia 120B Flagship Reasoning Engine hosted free on OpenRouter. High-precision logic, coding & architecture.";
+    } else if (modelId === "el-gpt-or-gemma-26b") {
+      currentModelName.textContent = "Gemma 4 26B (Free)";
+      currentModelTag.textContent = "🌐 OpenRouter Free";
+      currentModelTag.className = "model-tag cloud-badge";
+      if (heroTitle) heroTitle.textContent = "Gemma 4 26B (Free)";
+      if (heroSubtitle) heroSubtitle.textContent = "Google Gemma 26B instruction-tuned model hosted free on OpenRouter. Agile reasoning and full-stack coding.";
+    } else if (modelId === "el-gpt-or-laguna-s") {
+      currentModelName.textContent = "Poolside Laguna S 2.1";
+      currentModelTag.textContent = "🌐 OpenRouter Free";
+      currentModelTag.className = "model-tag cloud-badge";
+      if (heroTitle) heroTitle.textContent = "Poolside Laguna S 2.1";
+      if (heroSubtitle) heroSubtitle.textContent = "Poolside Laguna S 2.1 on OpenRouter. Specialized reasoning and developer assistant with free tier access.";
     } else if (modelId === "el-gpt-1-8-ultra") {
       currentModelName.textContent = "El GPT 1.8 Ultra";
       currentModelTag.textContent = "1B Local MPS";
@@ -460,6 +481,17 @@ document.addEventListener("DOMContentLoaded", () => {
     toggleApiKeyVisibilityBtn?.addEventListener("click", () => {
       if (groqApiKeyInput) {
         groqApiKeyInput.type = groqApiKeyInput.type === "password" ? "text" : "password";
+      }
+    });
+    openRouterApiKeyInput?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        saveCloudKey();
+      }
+    });
+    toggleOrApiKeyVisibilityBtn?.addEventListener("click", () => {
+      if (openRouterApiKeyInput) {
+        openRouterApiKeyInput.type = openRouterApiKeyInput.type === "password" ? "text" : "password";
       }
     });
 
@@ -1203,6 +1235,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const temp = currentModelId === "el-gpt-1-5-flash" ? 0.2 : isDeepReasoning ? 0.6 : 0.25;
 
+    const activeApiKey = currentModelId.startsWith("el-gpt-or-")
+      ? (userOpenRouterKey || undefined)
+      : (userGroqKey || undefined);
+
     const chatPayload = {
       messages: chat.messages,
       model_id: currentModelId,
@@ -1210,7 +1246,7 @@ document.addEventListener("DOMContentLoaded", () => {
       top_k: currentModelId === "el-gpt-1-5-flash" ? 20 : 40,
       top_p: 0.9,
       max_new_tokens: 1024,
-      api_key: userGroqKey || undefined,
+      api_key: activeApiKey,
     };
 
     try {
@@ -1292,10 +1328,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const tokSpeed = (estTokens / Math.max(parseFloat(elapsedSec), 0.1)).toFixed(1);
 
       let displayModelName = "El GPT";
-      if (currentModelId === "el-gpt-cloud-llama-70b") displayModelName = "Cloud 70B ⚡";
-      else if (currentModelId === "el-gpt-cloud-deepseek-r1") displayModelName = "DeepSeek R1 ⚡";
-      else if (currentModelId === "el-gpt-cloud-qwen-32b") displayModelName = "Qwen 32B ⚡";
-      else if (currentModelId === "el-gpt-cloud-llama-8b") displayModelName = "Cloud Instant ⚡";
+      if (currentModelId === "el-gpt-cloud-120b" || currentModelId === "el-gpt-cloud-llama-70b") displayModelName = "Cloud 120B ⚡";
+      else if (currentModelId === "el-gpt-cloud-qwen-27b" || currentModelId === "el-gpt-cloud-qwen-32b") displayModelName = "Qwen 27B ⚡";
+      else if (currentModelId === "el-gpt-cloud-20b" || currentModelId === "el-gpt-cloud-llama-8b") displayModelName = "Fast 20B ⚡";
+      else if (currentModelId === "el-gpt-or-nemotron-120b") displayModelName = "Nemotron 120B 🌐";
+      else if (currentModelId === "el-gpt-or-gemma-26b") displayModelName = "Gemma 26B 🌐";
+      else if (currentModelId === "el-gpt-or-laguna-s") displayModelName = "Laguna S 🌐";
       else if (currentModelId === "el-gpt-1-8-ultra") displayModelName = "1.54B Ultra (Local)";
       else if (currentModelId === "el-gpt-1-5-pro") displayModelName = "500M Pro (Local)";
       else if (currentModelId === "el-gpt-1-5-flash") displayModelName = "500M Flash (Local)";
@@ -1376,7 +1414,9 @@ document.addEventListener("DOMContentLoaded", () => {
     cloudKeyModal?.classList.remove("hidden");
     if (groqApiKeyInput) {
       groqApiKeyInput.value = userGroqKey;
-      setTimeout(() => groqApiKeyInput.focus(), 50);
+    }
+    if (openRouterApiKeyInput) {
+      openRouterApiKeyInput.value = userOpenRouterKey;
     }
     checkCloudStatus();
   }
@@ -1391,11 +1431,16 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!res.ok) res = await fetch("/cloud/status");
       if (res.ok) {
         const data = await res.json();
-        const hasKey = !!userGroqKey || !!data.has_server_api_key;
+        const hasKey = !!userGroqKey || !!userOpenRouterKey || !!data.has_server_api_key;
         if (hasKey) {
           if (cloudKeyBtnText) cloudKeyBtnText.textContent = "Cloud ⚡ (Ready)";
           openCloudKeyBtn?.classList.add("has-key");
-          if (cloudStatusText) cloudStatusText.textContent = "Cloud Active (450+ tok/s ready)";
+          if (cloudStatusText) {
+            const providers = [];
+            if (userGroqKey || data.has_groq_key) providers.push("Groq");
+            if (userOpenRouterKey || data.has_openrouter_key) providers.push("OpenRouter");
+            cloudStatusText.textContent = `Cloud Ready (${providers.join(" & ") || "Active"})`;
+          }
           const dot = cloudStatusIndicator?.querySelector(".status-dot-pulse");
           if (dot) dot.classList.add("active");
         } else {
@@ -1412,24 +1457,40 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function saveCloudKey() {
-    const key = groqApiKeyInput ? groqApiKeyInput.value.trim() : "";
-    if (!key) {
-      alert("Please enter a valid Groq API Key (starts with gsk_...)");
+    const groqKey = groqApiKeyInput ? groqApiKeyInput.value.trim() : "";
+    const orKey = openRouterApiKeyInput ? openRouterApiKeyInput.value.trim() : "";
+
+    if (!groqKey && !orKey) {
+      alert("Please enter either a Groq API Key (starts with gsk_...) or an OpenRouter Key (starts with sk-or-...)");
       return;
     }
 
-    userGroqKey = key;
-    localStorage.setItem("el_gpt_groq_key", key);
+    if (groqKey) {
+      userGroqKey = groqKey;
+      localStorage.setItem("el_gpt_groq_key", groqKey);
+      try {
+        await fetch("/api/cloud/key", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ api_key: groqKey, provider: "groq" }),
+        });
+      } catch (e) {
+        console.warn("Could not save Groq key to server:", e);
+      }
+    }
 
-    // Save to server .env if possible
-    try {
-      await fetch("/api/cloud/key", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ api_key: key }),
-      });
-    } catch (e) {
-      console.warn("Could not save key to server:", e);
+    if (orKey) {
+      userOpenRouterKey = orKey;
+      localStorage.setItem("el_gpt_openrouter_key", orKey);
+      try {
+        await fetch("/api/cloud/key", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ api_key: orKey, provider: "openrouter" }),
+        });
+      } catch (e) {
+        console.warn("Could not save OpenRouter key to server:", e);
+      }
     }
 
     checkCloudStatus();
@@ -1438,14 +1499,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function clearCloudKey() {
     userGroqKey = "";
+    userOpenRouterKey = "";
     localStorage.removeItem("el_gpt_groq_key");
+    localStorage.removeItem("el_gpt_openrouter_key");
     if (groqApiKeyInput) groqApiKeyInput.value = "";
+    if (openRouterApiKeyInput) openRouterApiKeyInput.value = "";
     checkCloudStatus();
   }
 
   function initCloudSettings() {
     if (groqApiKeyInput && userGroqKey) {
       groqApiKeyInput.value = userGroqKey;
+    }
+    if (openRouterApiKeyInput && userOpenRouterKey) {
+      openRouterApiKeyInput.value = userOpenRouterKey;
     }
     checkCloudStatus();
   }
