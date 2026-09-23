@@ -1,0 +1,32 @@
+# Python Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Large Neural Network Weights & Checkpoints (Keep local, don't push to GitHub)
+checkpoints/
+*.pt
+*.pth
+*.bin
+*.safetensors
+.cache/
+
+# Local Environment Variables & Secrets
+.env
+.env.local
+.env.*.local
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# Logs & Temporary Data
+*.log
+scratch/

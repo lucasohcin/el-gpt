@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>El GPT 1.8 Ultra — 1 Billion Parameter AI Engine & Studio</title>
+  <!-- KaTeX for Math Equations -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  <!-- Highlight.js for Syntax Highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark-dimmed.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <!-- Marked for Markdown Parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="dark-theme">
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <button class="new-chat-btn" id="newChatBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>New chat</span>
+          <span class="btn-kbd-shortcut">⌘K</span>
+        </button>
+        <button class="icon-btn close-sidebar-btn" id="sidebarToggleBtn" title="Toggle Sidebar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="9" y1="3" x2="9" y2="21"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- History List -->
+      <div class="history-container">
+        <div class="history-section-title">Recent Chats</div>
+        <div class="history-list" id="historyList">
+          <!-- Chat history items injected here -->
+        </div>
+      </div>
+
+      <!-- Sidebar Footer -->
+      <div class="sidebar-footer">
+        <button class="studio-btn memory-nav-btn" id="openMemoryBtn">
+          <div class="studio-badge-icon memory-badge-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2a4 4 0 0 0-4 4c0 1.95 1.4 3.58 3.25 3.93A7.002 7.002 0 0 0 5 17a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1 7.002 7.002 0 0 0-6.25-7.07A4.002 4.002 0 0 0 12 2z"></path>
+              <circle cx="12" cy="6" r="2"></circle>
+            </svg>
+          </div>
+          <div class="studio-btn-text">
+            <strong>Memory & Preferences</strong>
+            <span id="memoryCountSubtitle">0 saved preferences</span>
+          </div>
+        </button>
+
+        <button class="studio-btn" id="openStudioBtn">
+          <div class="studio-badge-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </div>
+          <div class="studio-btn-text">
+            <strong>Training Studio</strong>
+            <span>10M / 100M / 500M / 1B</span>
+          </div>
+        </button>
+
+        <div class="user-profile-row">
+          <div class="user-avatar">EG</div>
+          <div class="user-info">
+            <span class="user-title">El GPT 1.8 Ultra</span>
+            <span class="user-sub" id="deviceLabel">Apple Silicon M1 • 1.54B Flagship</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="chat-main">
+      <!-- Navbar -->
+      <header class="chat-header">
+        <div class="header-left">
+          <button class="icon-btn mobile-toggle-btn" id="mobileToggleBtn" title="Open Sidebar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <div class="model-select-wrapper">
+            <button class="model-select-btn" id="modelSelectBtn">
+              <span class="model-name" id="currentModelName">El GPT 1.8 Ultra</span>
+              <span class="model-tag cloud-badge-lightning" id="currentModelTag">⚡ 450 tps Cloud</span>
+              <svg class="chevron-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+            <div class="model-dropdown-menu hidden" id="modelDropdownMenu">
+              <div class="model-dropdown-section-title">⚡ Cloud AI (Blazing Fast • 0% Mac CPU)</div>
+              <div class="model-option active" data-model="el-gpt-cloud-llama-70b">
+                <div class="model-option-header">
+                  <strong>El GPT Cloud 70B</strong>
+                  <span class="badge cloud-badge">⚡ 450 tps Cloud</span>
+                </div>
+                <p>Flagship Llama 3.3 70B in the cloud. Blazing speed, zero computer lag, master-level coding, math & reasoning.</p>
+              </div>
+              <div class="model-option" data-model="el-gpt-cloud-deepseek-r1">
+                <div class="model-option-header">
+                  <strong>El GPT DeepSeek R1</strong>
+                  <span class="badge cloud-badge">⚡ Reasoning Cloud</span>
+                </div>
+                <p>Deep chain-of-thought reasoning, advanced algorithms, complex logic & rigorous step-by-step proofs.</p>
+              </div>
+              <div class="model-option" data-model="el-gpt-cloud-qwen-32b">
+                <div class="model-option-header">
+                  <strong>El GPT Qwen 2.5 32B</strong>
+                  <span class="badge cloud-badge">⚡ 400 tps Cloud</span>
+                </div>
+                <p>State-of-the-art coding and multilingual engine. Elite HTML/CSS/JS web development & math.</p>
+              </div>
+              <div class="model-option" data-model="el-gpt-cloud-llama-8b">
+                <div class="model-option-header">
+                  <strong>El GPT Cloud Instant</strong>
+                  <span class="badge cloud-badge">⚡ 750 tps Ultra-Speed</span>
+                </div>
+                <p>Ultra-low latency streaming (750+ tok/s) for instantaneous conversation and rapid execution.</p>
+              </div>
+
+              <div class="model-dropdown-section-title">💻 Local Mac Engines (High RAM & CPU)</div>
+              <div class="model-option" data-model="el-gpt-1-8-ultra">
+                <div class="model-option-header">
+                  <strong>El GPT 1.8 Ultra</strong>
+                  <span class="badge ultra-badge">1B Local MPS</span>
+                </div>
+                <p>Flagship 1.54B parameter neural engine. Master-level HTML/CSS web apps, multi-step math, systems engineering & memory.</p>
+              </div>
+              <div class="model-option" data-model="el-gpt-1-5-pro">
+                <div class="model-option-header">
+                  <strong>El GPT 1.5 Pro</strong>
+                  <span class="badge pro-badge">500M Pro</span>
+                </div>
+                <p>Flagship 500M reasoning engine. Long-term persistent memory & preferences, HTML/CSS coding, multi-step math.</p>
+              </div>
+              <div class="model-option" data-model="el-gpt-1-5-flash">
+                <div class="model-option-header">
+                  <strong>El GPT 1.5 Flash</strong>
+                  <span class="badge flash-badge">500M Flash</span>
+                </div>
+                <p>Ultra-low latency 500M parameter model for rapid execution.</p>
+              </div>
+              <div class="model-option" data-model="el-gpt-1-0-pro">
+                <div class="model-option-header">
+                  <strong>El GPT 1.0 Pro</strong>
+                  <span class="badge smart-badge">135M Compact</span>
+                </div>
+                <p>Compact 135M model pre-trained on 2T tokens for lightweight chat.</p>
+              </div>
+              <div class="model-option" data-model="el-gpt-scratch">
+                <div class="model-option-header">
+                  <strong>El GPT Scratch</strong>
+                  <span class="badge train-badge">Custom 10M–1B</span>
+                </div>
+                <p>Your custom PyTorch Transformer decoder (10M / 100M / 500M / 1B) trained locally in the Training Studio.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="header-right">
+          <button class="header-action-btn cloud-key-btn" id="openCloudKeyBtn" title="Cloud Engine & API Key Settings">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
+            </svg>
+            <span id="cloudKeyBtnText">Cloud ⚡</span>
+          </button>
+          <button class="header-action-btn" id="toggleCanvasBtn" title="Toggle Live Canvas Workspace">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="14" y1="3" x2="14" y2="21"></line>
+            </svg>
+            <span>Canvas</span>
+          </button>
+          <button class="header-action-btn" id="openPromptsBtn" title="Prompt Library">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            </svg>
+            <span>Prompts</span>
+          </button>
+          <button class="header-action-btn" id="exportChatBtn" title="Export Conversation">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>Export</span>
+          </button>
+          <button class="clean-btn" id="quickTrainBtn" title="Open Training Studio">
+            <span class="pulse-dot"></span>
+            <span>Train Studio</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Message Area -->
+      <div class="chat-container" id="chatContainer">
+        <!-- Hero State -->
+        <div class="hero-welcome" id="heroWelcome">
+          <div class="hero-logo">
+            <div class="neural-orb"></div>
+          </div>
+          <h1 class="hero-title" id="heroTitle">El GPT 1.8 Ultra</h1>
+          <p class="hero-subtitle">1 Billion+ Parameter Flagship Neural Network. Features Live Code Sandbox, Voice Read Aloud, and Persistent Long-Term Memory.</p>
+
+          <div class="prompt-suggestions">
+            <button class="suggestion-card" data-prompt="Build a single-file interactive Kanban board web app with modern dark-mode CSS and drag-and-drop tasks.">
+              <span class="suggestion-icon">🌐</span>
+              <div class="suggestion-content">
+                <strong>Full-Stack Web App</strong>
+                <span>Interactive widgets, Kanban boards, Live Sandbox</span>
+              </div>
+            </button>
+            <button class="suggestion-card" data-prompt="Solve step-by-step: Calculate ((45 * 18) + (32 * 14) - 85) / 5 and verify with quadratic equation.">
+              <span class="suggestion-icon">🧮</span>
+              <div class="suggestion-content">
+                <strong>Olympiad Mathematics</strong>
+                <span>Step-by-step arithmetic, calculus & algebra</span>
+              </div>
+            </button>
+            <button class="suggestion-card" data-prompt="Remember that I am building a full-stack SaaS app in React & Tailwind, and prefer clean modular code.">
+              <span class="suggestion-icon">🧠</span>
+              <div class="suggestion-content">
+                <strong>Memory & Preferences</strong>
+                <span>Store background & coding style across chats</span>
+              </div>
+            </button>
+            <button class="suggestion-card" data-prompt="Implement an LRU Cache in Python with O(1) get and put, with complete type annotations.">
+              <span class="suggestion-icon">💻</span>
+              <div class="suggestion-content">
+                <strong>Algorithms & Systems</strong>
+                <span>Clean data structures, complexity & tests</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Chat Messages Injected Here -->
+        <div class="messages-flow" id="messagesFlow"></div>
+      </div>
+
+      <!-- Input Area -->
+      <footer class="chat-footer">
+        <div class="input-container-card">
+          <div class="input-toolbar-top">
+            <button class="mode-pill-btn active" id="modeToggleBtn" title="Toggle reasoning depth">
+              <span class="mode-dot"></span>
+              <span id="modeLabel">🧠 Deep Reasoning</span>
+            </button>
+            <span class="input-stat-counter" id="inputTokenCount">0 chars</span>
+          </div>
+          <div class="input-box-wrapper">
+            <textarea
+              id="chatInput"
+              placeholder="Message El GPT 1.8 Ultra... (e.g. 'Build an interactive web app' or 'Remember that...')"
+              rows="1"
+              autofocus
+            ></textarea>
+            <div class="input-actions">
+              <button class="send-btn" id="sendBtn" disabled title="Send message">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="12" y1="19" x2="12" y2="5"></line>
+                  <polyline points="5 12 12 5 19 12"></polyline>
+                </svg>
+              </button>
+              <button class="stop-btn hidden" id="stopBtn" title="Stop generating">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="footer-disclaimer">
+          El GPT 1.8 Ultra running locally on Apple Silicon M1 (MPS) with 1.54 Billion parameters & Metal hardware acceleration.
+        </div>
+      </footer>
+    </main>
+
+    <!-- Split-Screen Canvas Workspace (Claude Artifacts / ChatGPT Canvas Style) -->
+    <aside class="canvas-workspace hidden" id="canvasWorkspace">
+      <div class="canvas-header">
+        <div class="canvas-header-left">
+          <div class="canvas-title-badge">
+            <span class="canvas-dot"></span>
+            <span class="canvas-title" id="canvasTitle">Interactive Preview</span>
+          </div>
+          <span class="canvas-filename" id="canvasFilename">index.html</span>
+        </div>
+        <div class="canvas-header-center">
+          <div class="canvas-device-switcher">
+            <button class="device-btn active" data-viewport="desktop" title="Desktop View (100%)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+              </svg>
+            </button>
+            <button class="device-btn" data-viewport="tablet" title="Tablet View (768px)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
+                <line x1="12" y1="18" x2="12.01" y2="18"></line>
+              </svg>
+            </button>
+            <button class="device-btn" data-viewport="mobile" title="Mobile View (375px)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                <line x1="12" y1="18" x2="12.01" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="canvas-header-right">
+          <button class="canvas-action-btn" id="canvasRefreshBtn" title="Refresh Preview">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+          </button>
+          <button class="canvas-action-btn" id="canvasDownloadBtn" title="Download File">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+          </button>
+          <button class="canvas-action-btn" id="canvasCloseBtn" title="Close Canvas">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="canvas-body" id="canvasBody">
+        <div class="canvas-frame-container" id="canvasFrameContainer">
+          <iframe id="canvasIframe" sandbox="allow-scripts allow-modals allow-same-origin allow-forms" title="Live Canvas Preview"></iframe>
+        </div>
+        <div class="canvas-code-container hidden" id="canvasCodeContainer">
+          <pre><code id="canvasCodeBlock"></code></pre>
+        </div>
+      </div>
+      <div class="canvas-footer">
+        <div class="canvas-mode-tabs">
+          <button class="canvas-tab active" data-tab="preview">👁️ Live Preview</button>
+          <button class="canvas-tab" data-tab="code">💻 Source Code</button>
+          <button class="canvas-tab" data-tab="console">🪵 Console (<span id="canvasLogCount">0</span>)</button>
+        </div>
+        <div class="canvas-footer-right">
+          <span class="canvas-status-pill" id="canvasStatusPill">Ready</span>
+        </div>
+      </div>
+      <div class="canvas-console-drawer hidden" id="canvasConsoleDrawer">
+        <div class="console-drawer-header">
+          <span>Console Output</span>
+          <button class="console-clear-btn" id="clearConsoleBtn">Clear</button>
+        </div>
+        <div class="console-drawer-logs" id="canvasConsoleLogs"></div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Live Web Sandbox / Canvas Modal -->
+  <div class="modal-overlay hidden" id="previewModal">
+    <div class="modal-card preview-modal-card">
+      <div class="modal-header preview-header">
+        <div class="modal-title-group">
+          <div class="preview-badge-row">
+            <span class="pulse-dot"></span>
+            <h2>Live Web Canvas Preview</h2>
+          </div>
+          <span class="modal-sub">Sandboxed client execution environment</span>
+        </div>
+        <div class="preview-toolbar">
+          <div class="device-switcher">
+            <button class="device-btn active" data-device="desktop" title="Desktop View (100%)">🖥️</button>
+            <button class="device-btn" data-device="tablet" title="Tablet View (768px)">📱</button>
+            <button class="device-btn" data-device="mobile" title="Mobile View (375px)">📲</button>
+          </div>
+          <button class="icon-btn" id="openExternalPreviewBtn" title="Open in New Window">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+          </button>
+          <button class="icon-btn" id="closePreviewBtn" title="Close Preview">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="preview-viewport-wrapper">
+        <iframe id="previewIframe" sandbox="allow-scripts allow-modals allow-same-origin"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- Prompt Library Modal -->
+  <div class="modal-overlay hidden" id="promptLibraryModal">
+    <div class="modal-card prompts-modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h2>Prompt & Architecture Library</h2>
+          <span class="modal-sub">Click any template to load directly into El GPT 1.8 Ultra</span>
+        </div>
+        <button class="icon-btn" id="closePromptsBtn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="prompts-grid">
+          <div class="prompt-template-card" data-prompt="Build a complete single-file interactive Pomodoro Timer with a circular SVG progress countdown and alarm chime.">
+            <div class="prompt-card-icon">⏱️</div>
+            <h4>Pomodoro Web Timer</h4>
+            <p>Single-file HTML/CSS/JS widget with circular SVG progress animation and controls.</p>
+          </div>
+          <div class="prompt-template-card" data-prompt="Build a full dark-mode responsive Analytics Dashboard in a single HTML file with CSS grid and SVG trendline charts.">
+            <div class="prompt-card-icon">📊</div>
+            <h4>Analytics Dashboard</h4>
+            <p>Executive metrics, KPI cards, and smooth SVG graphs with dark glassmorphism.</p>
+          </div>
+          <div class="prompt-template-card" data-prompt="Write an efficient Trie (Prefix Tree) implementation in Python supporting insert, search, and startsWith with O(L) complexity.">
+            <div class="prompt-card-icon">🌲</div>
+            <h4>Trie Prefix Tree (Python)</h4>
+            <p>Production autocomplete tree with type hints, search methods, and unit tests.</p>
+          </div>
+          <div class="prompt-template-card" data-prompt="Solve step-by-step: Find the global minimum and maximum of f(x) = 2x^3 - 9x^2 + 12x + 5 on the interval [0, 3].">
+            <div class="prompt-card-icon">📐</div>
+            <h4>Calculus Optimization</h4>
+            <p>Step-by-step critical points, second derivative test, and interval evaluation.</p>
+          </div>
+          <div class="prompt-template-card" data-prompt="Design a high-throughput Rate Limiter using the Sliding Window Log algorithm in TypeScript with concurrency safety.">
+            <div class="prompt-card-icon">🛡️</div>
+            <h4>Sliding Window Rate Limiter</h4>
+            <p>TypeScript API gateway rate limiter with millisecond precision and unit tests.</p>
+          </div>
+          <div class="prompt-template-card" data-prompt="Explain the difference between P vs NP in theoretical computer science with vivid real-world analogies.">
+            <div class="prompt-card-icon">💡</div>
+            <h4>P vs NP Computer Science</h4>
+            <p>Deep theoretical computer science breakdown made intuitive and engaging.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Memory & Preferences Modal -->
+  <div class="modal-overlay hidden" id="memoryModal">
+    <div class="modal-card memory-modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h2>Learned Memories & Preferences</h2>
+          <span class="modal-sub">El GPT 1.8 Ultra remembers these facts and preferences across all conversations</span>
+        </div>
+        <button class="icon-btn" id="closeMemoryBtn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="memory-input-group">
+          <input type="text" id="newMemoryInput" placeholder="Add a preference (e.g. 'Always write production TypeScript')" />
+          <button class="primary-btn add-memory-btn" id="addMemoryBtn">Save Memory</button>
+        </div>
+
+        <div class="memory-list-wrapper">
+          <div class="memory-list-header">
+            <span>Stored Preferences (<span id="memoryCount">0</span>)</span>
+            <button class="danger-link-btn" id="clearMemoriesBtn">Clear All</button>
+          </div>
+          <div class="memory-items-list" id="memoryItemsList">
+            <!-- Memory cards injected here -->
+          </div>
+        </div>
+
+        <div class="memory-tip-card">
+          <div class="memory-tip-icon">💡</div>
+          <div class="memory-tip-text">
+            <strong>Automatic Learning:</strong> You can also teach El GPT 1.8 directly in regular chat by saying <em>"Remember that..."</em> or <em>"I prefer..."</em>.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cloud API Key & Engine Modal -->
+  <div class="modal-overlay hidden" id="cloudKeyModal">
+    <div class="modal-card cloud-modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h2>⚡ Cloud Engine & Free API Key</h2>
+          <span class="modal-sub">Zero computer lag, 0% Mac CPU/RAM, and 450+ tokens/second via Groq Cloud</span>
+        </div>
+        <button class="icon-btn" id="closeCloudKeyBtn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="cloud-info-box">
+          <div class="cloud-info-header">
+            <div class="cloud-info-status" id="cloudStatusIndicator">
+              <span class="status-dot-pulse"></span>
+              <strong id="cloudStatusText">Checking Cloud Status...</strong>
+            </div>
+            <a href="https://console.groq.com/keys" target="_blank" class="free-key-link">
+              <span>Get Free Key (100% Free)</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+              </svg>
+            </a>
+          </div>
+          <p class="cloud-info-desc">
+            Running AI in the cloud stops your Mac fans from spinning, uses <strong>0% of your computer's RAM</strong>, and streams responses instantly at <strong>400–750 tokens per second</strong>.
+          </p>
+        </div>
+
+        <div class="cloud-input-group">
+          <label for="groqApiKeyInput">Groq API Key (starts with <code>gsk_...</code>)</label>
+          <div class="api-key-input-wrapper">
+            <input type="password" id="groqApiKeyInput" placeholder="gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxx" autocomplete="off" />
+            <button type="button" class="icon-btn" id="toggleApiKeyVisibilityBtn" title="Toggle Visibility">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="cloud-actions-row">
+          <button class="primary-btn" id="saveCloudKeyBtn">Save API Key</button>
+          <button class="secondary-btn" id="clearCloudKeyBtn">Clear Key</button>
+        </div>
+
+        <div class="cloud-tip-card">
+          <div class="cloud-tip-icon">🚀</div>
+          <div class="cloud-tip-text">
+            <strong>How to get your free key:</strong>
+            <ol style="margin: 4px 0 0 16px; padding: 0; line-height: 1.5;">
+              <li>Go to <a href="https://console.groq.com" target="_blank" style="color:#38bdf8; text-decoration: underline;">console.groq.com</a> and sign in with Google/GitHub.</li>
+              <li>Click <strong>API Keys</strong> &rarr; <strong>Create API Key</strong>.</li>
+              <li>Paste the key above and click <strong>Save API Key</strong>.</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Training Studio Modal -->
+  <div class="modal-overlay hidden" id="studioModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h2>Neural Training Studio</h2>
+          <span class="modal-sub">Monitor weights, real-time loss, and trigger fine-tuning across parameter scales (10M – 1B)</span>
+        </div>
+        <button class="icon-btn" id="closeStudioBtn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Telemetry Stats Cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-label">Model Parameters</span>
+            <span class="stat-val" id="statParams">--</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Hardware Device</span>
+            <span class="stat-val highlight" id="statDevice">Apple M1 (MPS)</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Current Loss</span>
+            <span class="stat-val" id="statLoss">--</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Throughput</span>
+            <span class="stat-val" id="statSpeed">-- tok/s</span>
+          </div>
+        </div>
+
+        <!-- Real-time Chart -->
+        <div class="chart-section">
+          <div class="chart-header">
+            <span>Training Loss Curve</span>
+            <span class="chart-step" id="chartStep">Step 0 / 0</span>
+          </div>
+          <div class="canvas-container">
+            <canvas id="lossCanvas" width="600" height="200"></canvas>
+          </div>
+        </div>
+
+        <!-- Training Controls -->
+        <div class="controls-panel">
+          <div class="control-row-extra">
+            <div class="control-group">
+              <label for="inputScale">Model Scale Preset</label>
+              <select id="inputScale">
+                <option value="1b" selected>1B Parameters (Flagship Transformer • 1536-dim, 32 layers)</option>
+                <option value="500m">500M Parameters (Deep Transformer • 1024-dim, 24 layers)</option>
+                <option value="100m">100M Parameters (Balanced • 768-dim, 12 layers)</option>
+                <option value="10m">10M Parameters (Fast Iteration • 288-dim, 6 layers)</option>
+              </select>
+            </div>
+            <div class="control-group">
+              <label for="inputDataset">Training Dataset</label>
+              <select id="inputDataset">
+                <option value="data/train_ultra_1b.jsonl" selected>Ultra Massive Dataset (5,000 samples • Web, Math, Code, Chat)</option>
+                <option value="data/train_massive.jsonl">Massive Coding & Math (2,000 samples)</option>
+                <option value="data/train_custom.jsonl">Starter Balanced Dataset (150 samples)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="control-row">
+            <div class="control-group">
+              <label for="inputEpochs">Epochs</label>
+              <input type="number" id="inputEpochs" value="5" min="1" max="50">
+            </div>
+            <div class="control-group">
+              <label for="inputBatchSize">Batch Size</label>
+              <select id="inputBatchSize">
+                <option value="2">2 (Micro)</option>
+                <option value="4" selected>4 (Recommended)</option>
+                <option value="8">8 (Fast)</option>
+              </select>
+            </div>
+            <div class="control-group">
+              <label for="inputLr">Learning Rate</label>
+              <select id="inputLr">
+                <option value="0.0001">1e-4 (Gentle)</option>
+                <option value="0.0005" selected>5e-4 (Balanced)</option>
+                <option value="0.001">1e-3 (Aggressive)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="status-bar" id="trainingStatusBar">
+            Status: Idle (Ready to train)
+          </div>
+
+          <div class="action-row">
+            <button class="primary-btn" id="startTrainBtn">
+              <span class="btn-spinner hidden" id="trainSpinner"></span>
+              <span id="trainBtnText">Launch Training Run</span>
+            </button>
+            <button class="secondary-btn hidden" id="stopTrainBtn">Stop Training</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
