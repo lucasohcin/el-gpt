@@ -217,7 +217,7 @@ class CloudEngine:
         for m in messages:
             formatted_messages.append({"role": m.get("role", "user"), "content": m.get("content", "")})
 
-        model_info = CLOUD_MODELS.get(model_id, CLOUD_MODELS["el-gpt-cloud-llama-70b"])
+        model_info = CLOUD_MODELS.get(model_id, CLOUD_MODELS["el-gpt-cloud-120b"])
         groq_model = model_info["groq_model"]
 
         headers = {

@@ -1,26 +1,28 @@
 {
   "version": 2,
-  "functions": {
-    "api/**/*.py": {
-      "maxDuration": 60,
-      "memory": 1024
-    }
-  },
   "rewrites": [
     {
-      "source": "/api/chat",
-      "destination": "/api/chat.py"
-    },
-    {
-      "source": "/api/models",
-      "destination": "/api/models.py"
-    },
-    {
-      "source": "/api/cloud/(.*)",
-      "destination": "/api/cloud.py"
-    },
-    {
       "source": "/api/(.*)",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/api",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/chat",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/models",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/cloud/(.*)",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/memory/(.*)",
       "destination": "/api/index.py"
     }
   ]

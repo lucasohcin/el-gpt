@@ -297,6 +297,10 @@ async def get_models():
 @app.post("/api/chat/")
 @app.post("/chat")
 @app.post("/chat/")
+@app.post("/api")
+@app.post("/api/")
+@app.post("/api/index.py")
+@app.post("/index.py")
 @app.post("/")
 async def chat_endpoint(req: ChatRequest):
     """
@@ -508,6 +512,44 @@ async def run_code(req: RunCodeRequest):
             "exit_code": 1,
             "execution_time_ms": elapsed_ms,
         }
+
+
+# Universal Fallback Route — Guarantees ZERO 404 / 405 errors under any rewrite setup
+@app.api_route("/{path_name:path}", methods=["GET", "POST", "OPTIONS", "HEAD", "PUT", "DELETE"])
+async def catch_all_fallback(request: Request, path_name: str):
+    method = request.method.upper()
+    path = "/" + path_name.strip("/")
+
+    if method == "OPTIONS":
+        return Response(
+            status_code=200,
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, POST, OPTIONS, HEAD, PUT, DELETE",
+                "Access-Control-Allow-Headers": "*",
+            },
+        )
+
+    # If any POST arrives with messages or 'chat' in path, handle as chat
+    if "chat" in path or method == "POST":
+        try:
+            body = await request.json()
+            if isinstance(body, dict) and "messages" in body:
+                chat_req = ChatRequest(**body)
+                return await chat_endpoint(chat_req)
+        except Exception:
+            pass
+
+    if "model" in path:
+        return await get_models()
+
+    if "cloud" in path:
+        return await get_cloud_status()
+
+    if "memory" in path:
+        return await get_memories()
+
+    return {"status": "ok", "app": "El GPT", "path": path}
 
 
 # Mount frontend / public static directory ONLY when running locally

@@ -107,11 +107,12 @@ document.addEventListener("DOMContentLoaded", () => {
   let isGenerating = false;
   let abortController = null;
   let pollInterval = null;
-  let canvasCtx = lossCanvas ? lossCanvas.getContext("2d") : null;
   let userGroqKey = localStorage.getItem("el_gpt_groq_key") || "";
   let currentModelId = localStorage.getItem("el_gpt_model_id") || "el-gpt-cloud-120b";
-  if (currentModelId === "el-gpt-pro" || currentModelId === "el-gpt-1-5-pro" || currentModelId === "el-gpt-cloud-llama-70b") {
-    currentModelId = "el-gpt-cloud-120b"; // Default to 120B cloud model
+  // On web/cloud deployments, always default to the Cloud 120B model
+  if (!currentModelId.startsWith("el-gpt-cloud-")) {
+    currentModelId = "el-gpt-cloud-120b";
+    localStorage.setItem("el_gpt_model_id", currentModelId);
   }
   let isDeepReasoning = true;
   let activeLiveCode = "";
@@ -1202,24 +1203,49 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const temp = currentModelId === "el-gpt-1-5-flash" ? 0.2 : isDeepReasoning ? 0.6 : 0.25;
 
+    const chatPayload = {
+      messages: chat.messages,
+      model_id: currentModelId,
+      temperature: temp,
+      top_k: currentModelId === "el-gpt-1-5-flash" ? 20 : 40,
+      top_p: 0.9,
+      max_new_tokens: 1024,
+      api_key: userGroqKey || undefined,
+    };
+
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: chat.messages,
-          model_id: currentModelId,
-          temperature: temp,
-          top_k: currentModelId === "el-gpt-1-5-flash" ? 20 : 40,
-          top_p: 0.9,
-          max_new_tokens: 1024,
-          api_key: userGroqKey || undefined,
-        }),
-        signal: abortController.signal,
-      });
+      let response;
+      try {
+        response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(chatPayload),
+          signal: abortController.signal,
+        });
+      } catch (netErr) {
+        if (abortController.signal.aborted) throw netErr;
+        console.warn("Primary /api/chat unreachable, falling back to /chat...", netErr);
+      }
+
+      // If /api/chat gave 404 or 405 (or failed), retry automatically with fallback /chat
+      if (!response || (!response.ok && (response.status === 404 || response.status === 405))) {
+        console.warn("Retrying chat via fallback /chat endpoint...");
+        response = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(chatPayload),
+          signal: abortController.signal,
+        });
+      }
 
       if (!response.ok) {
-        throw new Error(`Server returned HTTP ${response.status}`);
+        let errDetail = `Server returned HTTP ${response.status}`;
+        try {
+          const errJson = await response.json();
+          if (errJson.detail) errDetail = errJson.detail;
+          else if (errJson.message) errDetail = errJson.message;
+        } catch (_) {}
+        throw new Error(errDetail);
       }
 
       const reader = response.body.getReader();
@@ -1331,7 +1357,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function fetchModelMetadata() {
     try {
-      const res = await fetch("/api/models");
+      let res = await fetch("/api/models");
+      if (!res.ok) res = await fetch("/models");
       if (res.ok) {
         const data = await res.json();
         const devStr = (data.device || "mps").toUpperCase();
@@ -1360,7 +1387,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function checkCloudStatus() {
     try {
-      const res = await fetch("/api/cloud/status");
+      let res = await fetch("/api/cloud/status");
+      if (!res.ok) res = await fetch("/cloud/status");
       if (res.ok) {
         const data = await res.json();
         const hasKey = !!userGroqKey || !!data.has_server_api_key;
@@ -1435,7 +1463,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function loadMemories() {
     try {
-      const res = await fetch("/api/memory");
+      let res = await fetch("/api/memory");
+      if (!res.ok) res = await fetch("/memory");
       if (!res.ok) return;
       const data = await res.json();
       const memories = data.memories || [];

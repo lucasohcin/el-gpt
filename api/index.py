@@ -11,3 +11,6 @@ if root_dir not in sys.path:
     sys.path.insert(0, root_dir)
 
 from server.app import app
+
+# Vercel supports both ASGI 'app' and 'handler'
+handler = app
