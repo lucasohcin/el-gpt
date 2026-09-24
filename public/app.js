@@ -27,6 +27,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const inputTokenCount = document.getElementById("inputTokenCount");
   const exportChatBtn = document.getElementById("exportChatBtn");
 
+  // Image Attachment & Vision Elements
+  const uploadImageBtn = document.getElementById("uploadImageBtn");
+  const imageFileInput = document.getElementById("imageFileInput");
+  const attachedImageTray = document.getElementById("attachedImageTray");
+  const attachedImagePreview = document.getElementById("attachedImagePreview");
+  const attachedImageName = document.getElementById("attachedImageName");
+  const attachedImageSize = document.getElementById("attachedImageSize");
+  const removeImageBtn = document.getElementById("removeImageBtn");
+  let attachedImageData = null;
+
   // Live Sandbox Preview Elements
   const previewModal = document.getElementById("previewModal");
   const previewIframe = document.getElementById("previewIframe");
@@ -237,12 +247,125 @@ document.addEventListener("DOMContentLoaded", () => {
     // Settings Export Chats
     settingsExportBtn?.addEventListener("click", exportCurrentChat);
 
+    // Image attachment processing
+    function handleImageFile(file) {
+      if (!file || !file.type.startsWith("image/")) {
+        alert("Please select a valid image file (PNG, JPG, WebP, GIF).");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          // Resize image if larger than 1280px to optimize transmission speed and payload
+          const maxDim = 1280;
+          let w = img.width;
+          let h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) {
+              h = Math.round((h * maxDim) / w);
+              w = maxDim;
+            } else {
+              w = Math.round((w * maxDim) / h);
+              h = maxDim;
+            }
+          }
+          // Ensure minimum 32x32 for Groq Vision API
+          w = Math.max(w, 32);
+          h = Math.max(h, 32);
+
+          const canvas = document.createElement("canvas");
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, w, h);
+          const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+
+          attachedImageData = dataUrl;
+          if (attachedImagePreview) attachedImagePreview.src = dataUrl;
+          if (attachedImageName) attachedImageName.textContent = file.name || "image.jpg";
+          if (attachedImageSize) {
+            const kb = Math.round((dataUrl.length * 0.75) / 1024);
+            attachedImageSize.textContent = `${kb} KB`;
+          }
+          if (attachedImageTray) attachedImageTray.classList.remove("hidden");
+          sendBtn.disabled = false;
+          chatInput.focus();
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearAttachedImage() {
+      attachedImageData = null;
+      if (imageFileInput) imageFileInput.value = "";
+      if (attachedImagePreview) attachedImagePreview.src = "";
+      if (attachedImageTray) attachedImageTray.classList.add("hidden");
+      const val = chatInput.value.trim();
+      sendBtn.disabled = !val || isGenerating;
+    }
+
+    // Image Upload & Removal Listeners
+    uploadImageBtn?.addEventListener("click", () => {
+      imageFileInput?.click();
+    });
+
+    imageFileInput?.addEventListener("change", (e) => {
+      if (e.target.files && e.target.files[0]) {
+        handleImageFile(e.target.files[0]);
+      }
+    });
+
+    removeImageBtn?.addEventListener("click", clearAttachedImage);
+
+    // Paste image directly into chat input
+    chatInput.addEventListener("paste", (e) => {
+      const items = (e.clipboardData || e.originalEvent?.clipboardData)?.items;
+      if (items) {
+        for (const item of items) {
+          if (item.type && item.type.startsWith("image/")) {
+            e.preventDefault();
+            const file = item.getAsFile();
+            if (file) handleImageFile(file);
+            break;
+          }
+        }
+      }
+    });
+
+    // Drag and drop image onto chat input container
+    const inputContainerCard = document.querySelector(".input-container-card");
+    if (inputContainerCard) {
+      inputContainerCard.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        inputContainerCard.classList.add("drag-over");
+      });
+      inputContainerCard.addEventListener("dragleave", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        inputContainerCard.classList.remove("drag-over");
+      });
+      inputContainerCard.addEventListener("drop", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        inputContainerCard.classList.remove("drag-over");
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+          const file = e.dataTransfer.files[0];
+          if (file.type && file.type.startsWith("image/")) {
+            handleImageFile(file);
+          }
+        }
+      });
+    }
+
     // Input resizing, stats & sending
     chatInput.addEventListener("input", () => {
       chatInput.style.height = "auto";
       chatInput.style.height = Math.min(chatInput.scrollHeight, 200) + "px";
       const val = chatInput.value;
-      sendBtn.disabled = !val.trim() || isGenerating;
+      sendBtn.disabled = (!val.trim() && !attachedImageData) || isGenerating;
       if (inputTokenCount) {
         const estTokens = Math.ceil(val.length / 4);
         inputTokenCount.textContent = `${val.length} chars (~${estTokens} tok)`;
@@ -456,7 +579,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function saveConversations() {
-    localStorage.setItem("el_gpt_chats", JSON.stringify(conversations));
+    try {
+      localStorage.setItem("el_gpt_chats", JSON.stringify(conversations));
+    } catch (e) {
+      console.warn("Storage quota exceeded or storage unavailable:", e);
+    }
   }
 
   function renderHistory() {
@@ -480,7 +607,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       heroWelcome.classList.add("hidden");
       chat.messages.forEach((msg) => {
-        const bubble = appendMessageBubble(msg.role, msg.content, false);
+        const bubble = appendMessageBubble(msg.role, msg.content, false, msg.image);
         if (msg.role === "assistant") {
           postProcessBubble(bubble, msg.content, msg.telemetry);
         }
@@ -491,7 +618,7 @@ document.addEventListener("DOMContentLoaded", () => {
     chatContainer.scrollTop = chatContainer.scrollHeight;
   }
 
-  function appendMessageBubble(role, initialContent = "", showCursor = false) {
+  function appendMessageBubble(role, initialContent = "", showCursor = false, image = null) {
     heroWelcome.classList.add("hidden");
 
     const row = document.createElement("div");
@@ -506,25 +633,39 @@ document.addEventListener("DOMContentLoaded", () => {
     const wrapper = document.createElement("div");
     wrapper.className = "message-bubble-wrapper";
 
-    const bubble = document.createElement("div");
-    bubble.className = "message-bubble";
-
-    if (role === "user") {
-      bubble.textContent = initialContent;
-    } else {
-      bubble.innerHTML = formatMarkdownAndMath(initialContent);
-      if (showCursor) {
-        const cursor = document.createElement("span");
-        cursor.className = "typing-cursor";
-        bubble.appendChild(cursor);
-      }
+    if (image && role === "user") {
+      const imgContainer = document.createElement("div");
+      imgContainer.className = "user-msg-image-wrapper";
+      const img = document.createElement("img");
+      img.src = image;
+      img.className = "user-msg-image";
+      img.alt = "Attached image";
+      imgContainer.appendChild(img);
+      wrapper.appendChild(imgContainer);
     }
 
-    wrapper.appendChild(bubble);
+    let bubble = null;
+    if (initialContent || role === "assistant" || !image) {
+      bubble = document.createElement("div");
+      bubble.className = "message-bubble";
+
+      if (role === "user") {
+        bubble.textContent = initialContent;
+      } else {
+        bubble.innerHTML = formatMarkdownAndMath(initialContent);
+        if (showCursor) {
+          const cursor = document.createElement("span");
+          cursor.className = "typing-cursor";
+          bubble.appendChild(cursor);
+        }
+      }
+      wrapper.appendChild(bubble);
+    }
+
     row.appendChild(wrapper);
     messagesFlow.appendChild(row);
     chatContainer.scrollTop = chatContainer.scrollHeight;
-    return bubble;
+    return bubble || wrapper;
   }
 
   function formatMarkdownAndMath(rawText) {
@@ -1171,7 +1312,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     chat.messages.forEach((msg) => {
       const speaker = msg.role === "user" ? "### 👤 User" : "### 🤖 El GPT 1.8 Ultra";
-      md += `${speaker}\n\n${msg.content}\n\n---\n\n`;
+      let content = msg.content || "";
+      if (msg.image) content = `*[Attached Image]*\n\n` + content;
+      md += `${speaker}\n\n${content}\n\n---\n\n`;
     });
 
     const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
@@ -1185,7 +1328,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function submitMessage() {
     const text = chatInput.value.trim();
-    if (!text || isGenerating) return;
+    if ((!text && !attachedImageData) || isGenerating) return;
+
+    const imageToSend = attachedImageData;
+    clearAttachedImage();
 
     chatInput.value = "";
     chatInput.style.height = "auto";
@@ -1200,13 +1346,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (chat.messages.length === 0) {
-      chat.title = text.slice(0, 32) + (text.length > 32 ? "..." : "");
+      const titlePrompt = text || (imageToSend ? "Image analysis" : "New Chat");
+      chat.title = titlePrompt.slice(0, 32) + (titlePrompt.length > 32 ? "..." : "");
       renderHistory();
     }
 
     // Add user message to UI & history
-    chat.messages.push({ role: "user", content: text });
-    appendMessageBubble("user", text);
+    const userMsg = { role: "user", content: text };
+    if (imageToSend) {
+      userMsg.image = imageToSend;
+    }
+    chat.messages.push(userMsg);
+    saveConversations();
+    appendMessageBubble("user", text, false, imageToSend);
 
     // Prepare assistant bubble
     isGenerating = true;

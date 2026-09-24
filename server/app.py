@@ -101,7 +101,8 @@ else:
 
 class ChatMessage(BaseModel):
     role: str
-    content: str
+    content: Optional[str] = ""
+    image: Optional[str] = None
 
 
 class ChatRequest(BaseModel):

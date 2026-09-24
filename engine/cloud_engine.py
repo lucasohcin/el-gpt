@@ -10,7 +10,13 @@ import json
 import os
 import re
 from typing import Dict, Generator, List, Optional
-import requests
+import urllib.request
+import urllib.error
+
+try:
+    import requests
+except ImportError:
+    requests = None
 
 from .memory import memory_engine
 
@@ -128,10 +134,17 @@ CLOUD_MODELS = {
 }
 
 BASE_SYSTEM_PROMPT = (
-    "You are El GPT, an elite AI assistant and software engineering engine running on ultra-fast cloud infrastructure. "
-    "You have state-of-the-art expertise in modern full-stack web development (HTML5, CSS3, modern JavaScript/TypeScript), "
-    "Python, algorithms, mathematics, and natural intelligent conversation. "
-    "Always provide clean, modern, well-commented code, step-by-step reasoning where applicable, and follow the user's preferences."
+    "You are El GPT, an intelligent, helpful, and friendly AI assistant. "
+    "Your tone is warm, thoughtful, natural, and distinctly human—never robotic, dry, or difficult to read.\n\n"
+    "CRITICAL FORMATTING & READABILITY GUIDELINES:\n"
+    "- Always format your answers for effortless reading, clarity, and scannability.\n"
+    "- Use clean bullet points (`- `) and numbered lists whenever explaining concepts, listing steps, or breaking down points.\n"
+    "- Use bold headings (`### `) to organize different sections.\n"
+    "- Keep paragraphs short (2 to 3 sentences maximum) with clear line breaks between paragraphs.\n"
+    "- Use **bold text** on key takeaways, terms, and important details so the user can quickly grasp the main ideas.\n"
+    "- Never dump dense, unformatted walls of text.\n"
+    "- When writing code, provide clean, modern, fully functional code inside markdown code blocks with the correct language tag.\n"
+    "- When an image is attached, provide a rich, structured visual breakdown with bullet points describing objects, text, colors, and direct answers to the user's inquiry."
 )
 
 
@@ -371,16 +384,39 @@ class CloudEngine:
         if memory_context:
             system_content += memory_context
 
-        # Build payload messages
+        # Check if any message contains an attached image for vision models
+        has_images = any(bool(m.get("image")) for m in messages)
+        api_model = model_info["api_model"]
+
+        # If an image is attached, automatically ensure a vision-capable model is used
+        if has_images:
+            if provider == "groq":
+                # Qwen 27B on Groq provides lightning-fast native vision
+                api_model = "qwen/qwen3.8-27b"
+            elif provider == "openrouter":
+                api_model = "qwen/qwen3.8-27b:free"
+
+        # Build payload messages with standard OpenAI/Groq multimodal schema
         formatted_messages = []
         has_system = any(m.get("role") == "system" for m in messages)
         if not has_system:
             formatted_messages.append({"role": "system", "content": system_content})
 
         for m in messages:
-            formatted_messages.append({"role": m.get("role", "user"), "content": m.get("content", "")})
+            role = m.get("role", "user")
+            content = m.get("content", "")
+            img = m.get("image")
+            if img:
+                formatted_messages.append({
+                    "role": role,
+                    "content": [
+                        {"type": "text", "text": content or "Please analyze and describe this image in detail with clear bullet points."},
+                        {"type": "image_url", "image_url": {"url": img}}
+                    ]
+                })
+            else:
+                formatted_messages.append({"role": role, "content": content})
 
-        api_model = model_info["api_model"]
         endpoint = self.openrouter_endpoint if provider == "openrouter" else self.groq_endpoint
 
         # Candidate keys to try (failover for rate limits)
@@ -413,32 +449,18 @@ class CloudEngine:
             }
 
             try:
-                with requests.post(endpoint, headers=headers, json=payload, stream=True, timeout=60) as resp:
-                    if resp.status_code != 200:
-                        try:
-                            err_data = resp.json()
-                            err_msg = err_data.get("error", {}).get("message", resp.text)
-                        except Exception:
-                            err_msg = resp.text
-
-                        # If 429 rate-limited and we have another key to try, failover
-                        if resp.status_code == 429 and len(candidate_keys) > 1 and current_key != candidate_keys[-1]:
-                            continue
-
-                        last_error = f"HTTP {resp.status_code}: {err_msg}"
-                        if resp.status_code == 401:
-                            yield f"⚠️ **{provider.capitalize()} API Error (401 Unauthorized)**: Invalid API Key. Please verify your key in the Cloud Settings modal."
-                        elif resp.status_code == 429:
-                            yield f"⚠️ **{provider.capitalize()} Rate Limit (429)**: The free upstream model is busy. Please wait a few seconds and try again, or switch to **Nemotron 3 Super 120B**."
-                        else:
-                            yield f"⚠️ **{provider.capitalize()} API Error ({resp.status_code})**: {err_msg}"
-                        return
-
-                    # Stream tokens
-                    for raw_line in resp.iter_lines():
+                post_data = json.dumps(payload).encode("utf-8")
+                req = urllib.request.Request(
+                    endpoint,
+                    data=post_data,
+                    headers=headers,
+                    method="POST",
+                )
+                with urllib.request.urlopen(req, timeout=60) as resp:
+                    for raw_line in resp:
                         if not raw_line:
                             continue
-                        line = raw_line.decode("utf-8")
+                        line = raw_line.decode("utf-8", errors="replace").strip()
                         if line.startswith("data: "):
                             data_str = line[6:].strip()
                             if data_str == "[DONE]":
@@ -458,10 +480,30 @@ class CloudEngine:
                     if success:
                         return
 
-            except requests.exceptions.Timeout:
-                last_error = "Connection Timeout"
-            except requests.exceptions.ConnectionError:
-                last_error = "Network Connection Error"
+            except urllib.error.HTTPError as http_err:
+                status_code = http_err.code
+                try:
+                    err_body = http_err.read().decode("utf-8", errors="replace")
+                    err_data = json.loads(err_body)
+                    err_msg = err_data.get("error", {}).get("message", err_body)
+                except Exception:
+                    err_msg = str(http_err)
+
+                # If 429 rate-limited and we have another key to try, failover
+                if status_code == 429 and len(candidate_keys) > 1 and current_key != candidate_keys[-1]:
+                    continue
+
+                last_error = f"HTTP {status_code}: {err_msg}"
+                if status_code == 401:
+                    yield f"⚠️ **{provider.capitalize()} API Error (401 Unauthorized)**: Invalid API Key. Please verify your key in the Cloud Settings modal."
+                elif status_code == 429:
+                    yield f"⚠️ **{provider.capitalize()} Rate Limit (429)**: The free upstream model is busy. Please wait a few seconds and try again, or switch to **Nemotron 3 Super 120B**."
+                else:
+                    yield f"⚠️ **{provider.capitalize()} API Error ({status_code})**: {err_msg}"
+                return
+
+            except (urllib.error.URLError, TimeoutError) as net_err:
+                last_error = f"Network Connection Error: {net_err}"
             except Exception as e:
                 last_error = str(e)
 

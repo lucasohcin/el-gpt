@@ -2545,3 +2545,113 @@ input:checked + .toggle-slider:before {
   transform: translateY(-1px);
 }
 
+/* ─── Image Attachment & Vision UI ─── */
+.input-actions-left {
+  display: flex;
+  align-items: center;
+  padding-bottom: 2px;
+}
+
+.upload-image-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.upload-image-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #38bdf8;
+  transform: scale(1.05);
+}
+
+.attached-image-tray {
+  padding: 6px 0 10px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.attached-image-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 6px 10px 6px 6px;
+}
+
+.attached-image-card img {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.attached-image-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.attached-image-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attached-image-size {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.remove-image-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: var(--text-muted);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.remove-image-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #f87171;
+}
+
+/* User Message Attached Image */
+.user-msg-image-wrapper {
+  margin-bottom: 8px;
+}
+
+.user-msg-image {
+  max-width: 280px;
+  max-height: 280px;
+  border-radius: 10px;
+  object-fit: cover;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: block;
+}
+
+/* Drag & Drop Over Highlight */
+.input-container-card.drag-over {
+  border-color: #38bdf8 !important;
+  background-color: rgba(56, 189, 248, 0.06) !important;
+}
+
+
