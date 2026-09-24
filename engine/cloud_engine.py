@@ -5,6 +5,7 @@ Provides ultra-fast, zero-hardware-load LLM streaming via:
 2. OpenRouter API (Access to free top-tier models: Nemotron 120B, Gemma 26B, Laguna S)
 """
 
+import base64
 import json
 import os
 import re
@@ -145,18 +146,31 @@ def load_env_file():
 load_env_file()
 
 
+def find_env_var(target_name: str) -> Optional[str]:
+    """Resolves an environment variable case-insensitively and ignoring underscores."""
+    val = os.environ.get(target_name)
+    if val and val.strip():
+        return val.strip().strip("'\"")
+
+    clean_target = target_name.lower().replace("_", "")
+    for k, v in os.environ.items():
+        if k.lower().replace("_", "") == clean_target and v and v.strip():
+            return v.strip().strip("'\"")
+    return None
+
+
 def get_api_key(client_provided_key: Optional[str] = None, provider: str = "groq") -> Optional[str]:
     """
     Resolves API key for the requested provider ('groq' or 'openrouter').
     Checks:
-    1. Client provided key (from localStorage)
-    2. Environment variable (GROQ_API_KEY or OPENROUTER_API_KEY)
+    1. Client provided key (from browser localStorage)
+    2. Environment variables with flexible case/naming variations
     3. Root .env file
     """
     load_env_file()
 
     if client_provided_key and client_provided_key.strip():
-        k = client_provided_key.strip()
+        k = client_provided_key.strip().strip("'\"")
         # Auto-detect provider if key prefix is unmistakable
         if k.startswith("sk-or-") and provider == "openrouter":
             return k
@@ -169,29 +183,37 @@ def get_api_key(client_provided_key: Optional[str] = None, provider: str = "groq
             return k
 
     if provider == "openrouter":
-        key = os.environ.get("OPENROUTER_API_KEY", "").strip()
-        if not key:
-            keys_pool = os.environ.get("OPENROUTER_API_KEYS", "").strip()
-            if keys_pool:
-                key = keys_pool.split(",")[0].strip()
-        return key if key else None
+        for var in ["OPENROUTER_API_KEY", "OPENROUTER_KEY", "OPENROUTER"]:
+            val = find_env_var(var)
+            if val:
+                if "," in val:
+                    return val.split(",")[0].strip().strip("'\"")
+                return val
+        pool = find_env_var("OPENROUTER_API_KEYS")
+        if pool:
+            return pool.split(",")[0].strip().strip("'\"")
+        return None
 
     # Groq provider
-    key = os.environ.get("GROQ_API_KEY", "").strip()
-    return key if key else None
+    for var in ["GROQ_API_KEY", "GROQ_KEY", "GROQ"]:
+        val = find_env_var(var)
+        if val:
+            return val
+    return None
 
 
 def get_openrouter_keys_pool() -> List[str]:
     """Returns all available OpenRouter keys from environment to handle failover."""
     load_env_file()
     keys = []
-    primary = os.environ.get("OPENROUTER_API_KEY", "").strip()
-    if primary:
-        keys.append(primary)
-    pool = os.environ.get("OPENROUTER_API_KEYS", "").strip()
+    for var in ["OPENROUTER_API_KEY", "OPENROUTER_KEY", "OPENROUTER"]:
+        val = find_env_var(var)
+        if val and val not in keys:
+            keys.append(val)
+    pool = find_env_var("OPENROUTER_API_KEYS")
     if pool:
         for k in pool.split(","):
-            clean_k = k.strip()
+            clean_k = k.strip().strip("'\"")
             if clean_k and clean_k not in keys:
                 keys.append(clean_k)
     return keys
