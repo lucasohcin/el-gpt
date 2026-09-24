@@ -33,20 +33,26 @@ def enhance_prompt(prompt: str) -> str:
     return clean
 
 
-def generate_image(prompt: str, width: int = 1024, height: int = 1024, model: str = "flux") -> Dict[str, any]:
+def generate_image(prompt: str, width: int = 1024, height: int = 1024, model: str = "turbo") -> Dict[str, any]:
     """
-    Generates a high-quality image URL via FLUX.1.
-    No API key required, 100% free.
+    Generates a high-quality image URL.
+    Uses ultra-fast turbo engine with flux fallback.
+    No API key required, 100% free forever.
     """
+    clean = clean_image_prompt(prompt)
     enhanced = enhance_prompt(prompt)
     encoded = urllib.parse.quote(enhanced)
     seed = random.randint(10000, 99999999)
+    
+    # Primary URL (Turbo for instant 1s rendering without Sana queue timeouts)
     url = f"https://image.pollinations.ai/prompt/{encoded}?width={width}&height={height}&model={model}&nologo=true&seed={seed}"
+    fallback_url = f"https://image.pollinations.ai/prompt/{encoded}?width={width}&height={height}&model=flux&nologo=true&seed={seed+7}"
 
     return {
         "success": True,
         "image_url": url,
-        "clean_prompt": clean_image_prompt(prompt),
+        "fallback_url": fallback_url,
+        "clean_prompt": clean,
         "enhanced_prompt": enhanced,
         "seed": seed,
         "model": model,

@@ -304,18 +304,18 @@ class CloudEngine:
         model_info = CLOUD_MODELS.get(model_id, CLOUD_MODELS["el-gpt-cloud-120b"])
         provider = model_info.get("provider", "groq")
 
-        # 1. FLUX.1 Image Generation Route (Zero API Key Needed, 100% Free)
+        # 1. Image Generation Route (Zero API Key Needed, 100% Free)
         if provider == "image" or model_id == "el-gpt-image-flux":
             from .image_engine import generate_image, clean_image_prompt
             last_prompt = messages[-1].get("content", "") if messages else "A futuristic neon dreamscape"
             clean = clean_image_prompt(last_prompt)
             img_result = generate_image(clean or last_prompt)
             img_url = img_result["image_url"]
+            fallback_url = img_result.get("fallback_url", img_url)
 
-            yield f"🎨 **Generated with FLUX.1 Image Studio**:\n\n"
+            yield f"🎨 **Image Creator**:\n\n"
             yield f"> *\"{clean}\"*\n\n"
-            yield f"![{clean}]({img_url})\n\n"
-            yield f"[⬇️ Download Image]({img_url}) • *1024×1024 • FLUX.1 Model • 100% Free*"
+            yield f'<div class="image-bubble-container"><img src="{img_url}" alt="{clean}" class="generated-image" data-fallback="{fallback_url}" /><div class="image-actions-row"><button class="download-image-btn" data-url="{img_url}" data-prompt="{clean}">⬇️ Download Image</button></div></div>\n\n'
             return
 
         # 2. Universal /image command trigger from any model
@@ -327,11 +327,11 @@ class CloudEngine:
                 clean = clean_image_prompt(prompt_text)
                 img_result = generate_image(clean or prompt_text)
                 img_url = img_result["image_url"]
+                fallback_url = img_result.get("fallback_url", img_url)
 
-                yield f"🎨 **Generated with FLUX.1 Image Studio**:\n\n"
+                yield f"🎨 **Image Creator**:\n\n"
                 yield f"> *\"{clean}\"*\n\n"
-                yield f"![{clean}]({img_url})\n\n"
-                yield f"[⬇️ Download Image]({img_url}) • *1024×1024 • FLUX.1 Model • 100% Free*"
+                yield f'<div class="image-bubble-container"><img src="{img_url}" alt="{clean}" class="generated-image" data-fallback="{fallback_url}" /><div class="image-actions-row"><button class="download-image-btn" data-url="{img_url}" data-prompt="{clean}">⬇️ Download Image</button></div></div>\n\n'
                 return
 
         # Resolve primary key for text models

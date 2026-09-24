@@ -13,22 +13,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const sidebarToggleBtn = document.getElementById("sidebarToggleBtn");
   const mobileToggleBtn = document.getElementById("mobileToggleBtn");
 
-  // Model Elements
-  const modelSelectBtn = document.getElementById("modelSelectBtn");
-  const modelDropdownMenu = document.getElementById("modelDropdownMenu");
-  const currentModelName = document.getElementById("currentModelName");
-  const currentModelTag = document.getElementById("currentModelTag");
+  // In-Chat Model Picker Pill & Popover Elements
+  const modelPillBtn = document.getElementById("modelPillBtn");
+  const modelPopover = document.getElementById("modelPopover");
+  const modelPillIcon = document.getElementById("modelPillIcon");
+  const modelPillText = document.getElementById("modelPillText");
   const heroTitle = document.getElementById("heroTitle");
   const heroSubtitle = document.querySelector(".hero-subtitle");
-  const deviceLabel = document.getElementById("deviceLabel");
 
   // Toolbar & Input Extras
   const modeToggleBtn = document.getElementById("modeToggleBtn");
   const modeLabel = document.getElementById("modeLabel");
   const inputTokenCount = document.getElementById("inputTokenCount");
-  const openPromptsBtn = document.getElementById("openPromptsBtn");
-  const closePromptsBtn = document.getElementById("closePromptsBtn");
-  const promptLibraryModal = document.getElementById("promptLibraryModal");
   const exportChatBtn = document.getElementById("exportChatBtn");
 
   // Live Sandbox Preview Elements
@@ -56,52 +52,29 @@ document.addEventListener("DOMContentLoaded", () => {
   const canvasLogCount = document.getElementById("canvasLogCount");
   const appLayout = document.querySelector(".app-layout");
 
-  // Memory Elements
-  const openMemoryBtn = document.getElementById("openMemoryBtn");
-  const closeMemoryBtn = document.getElementById("closeMemoryBtn");
-  const memoryModal = document.getElementById("memoryModal");
-  const newMemoryInput = document.getElementById("newMemoryInput");
-  const addMemoryBtn = document.getElementById("addMemoryBtn");
-  const memoryCount = document.getElementById("memoryCount");
-  const memoryCountSubtitle = document.getElementById("memoryCountSubtitle");
-  const memoryItemsList = document.getElementById("memoryItemsList");
-  const clearMemoriesBtn = document.getElementById("clearMemoriesBtn");
-
-  // Studio Elements
-  const openStudioBtn = document.getElementById("openStudioBtn");
-  const quickTrainBtn = document.getElementById("quickTrainBtn");
-  const closeStudioBtn = document.getElementById("closeStudioBtn");
-  const studioModal = document.getElementById("studioModal");
-  const statParams = document.getElementById("statParams");
-  const statDevice = document.getElementById("statDevice");
-  const statLoss = document.getElementById("statLoss");
-  const statSpeed = document.getElementById("statSpeed");
-  const chartStep = document.getElementById("chartStep");
-  const lossCanvas = document.getElementById("lossCanvas");
-  const inputScale = document.getElementById("inputScale");
-  const inputDataset = document.getElementById("inputDataset");
-  const inputEpochs = document.getElementById("inputEpochs");
-  const inputBatchSize = document.getElementById("inputBatchSize");
-  const inputLr = document.getElementById("inputLr");
-  const startTrainBtn = document.getElementById("startTrainBtn");
-  const stopTrainBtn = document.getElementById("stopTrainBtn");
-  const trainSpinner = document.getElementById("trainSpinner");
-  const trainBtnText = document.getElementById("trainBtnText");
-  const trainingStatusBar = document.getElementById("trainingStatusBar");
-
-  // Cloud Settings Elements
-  const openCloudKeyBtn = document.getElementById("openCloudKeyBtn");
-  const closeCloudKeyBtn = document.getElementById("closeCloudKeyBtn");
-  const cloudKeyModal = document.getElementById("cloudKeyModal");
+  // Unified Settings Modal Elements
+  const settingsModal = document.getElementById("settingsModal");
+  const headerSettingsBtn = document.getElementById("headerSettingsBtn");
+  const openSettingsSidebarBtn = document.getElementById("openSettingsSidebarBtn");
+  const closeSettingsBtn = document.getElementById("closeSettingsBtn");
   const groqApiKeyInput = document.getElementById("groqApiKeyInput");
   const openRouterApiKeyInput = document.getElementById("openRouterApiKeyInput");
   const saveCloudKeyBtn = document.getElementById("saveCloudKeyBtn");
   const clearCloudKeyBtn = document.getElementById("clearCloudKeyBtn");
-  const cloudKeyBtnText = document.getElementById("cloudKeyBtnText");
   const cloudStatusIndicator = document.getElementById("cloudStatusIndicator");
   const cloudStatusText = document.getElementById("cloudStatusText");
   const toggleApiKeyVisibilityBtn = document.getElementById("toggleApiKeyVisibilityBtn");
   const toggleOrApiKeyVisibilityBtn = document.getElementById("toggleOrApiKeyVisibilityBtn");
+  const settingsDeepReasoningToggle = document.getElementById("settingsDeepReasoningToggle");
+  const settingsExportBtn = document.getElementById("settingsExportBtn");
+  const settingsClearChatsBtn = document.getElementById("settingsClearChatsBtn");
+
+  // Memory Elements (inside Settings)
+  const newMemoryInput = document.getElementById("newMemoryInput");
+  const addMemoryBtn = document.getElementById("addMemoryBtn");
+  const memoryCount = document.getElementById("memoryCount");
+  const memoryItemsList = document.getElementById("memoryItemsList");
+  const clearMemoriesBtn = document.getElementById("clearMemoriesBtn");
 
   // State
   let conversations = JSON.parse(localStorage.getItem("el_gpt_chats") || "[]");
@@ -161,125 +134,108 @@ document.addEventListener("DOMContentLoaded", () => {
     currentModelId = modelId;
     localStorage.setItem("el_gpt_model_id", modelId);
 
-    document.querySelectorAll(".model-option").forEach((opt) => {
+    document.querySelectorAll(".model-popover-item").forEach((opt) => {
       if (opt.getAttribute("data-model") === modelId) {
         opt.classList.add("active");
+        if (modelPillIcon) modelPillIcon.textContent = opt.getAttribute("data-icon") || "✨";
+        if (modelPillText) modelPillText.textContent = opt.getAttribute("data-label") || "Auto";
       } else {
         opt.classList.remove("active");
       }
     });
 
-    if (modelId === "el-gpt-cloud-120b" || modelId === "el-gpt-cloud-llama-70b") {
-      currentModelName.textContent = "El GPT Cloud 120B";
-      currentModelTag.textContent = "⚡ 450 tps Cloud";
-      currentModelTag.className = "model-tag cloud-badge-lightning";
-      if (heroTitle) heroTitle.textContent = "El GPT Cloud 120B";
-      if (heroSubtitle) heroSubtitle.textContent = "Flagship 120 Billion parameter model in the cloud. Blazing speed (450+ tok/s), 0% Mac CPU, master-level coding, math & reasoning.";
-    } else if (modelId === "el-gpt-cloud-qwen-27b" || modelId === "el-gpt-cloud-qwen-32b") {
-      currentModelName.textContent = "El GPT Qwen 3.8 27B";
-      currentModelTag.textContent = "⚡ 400 tps Cloud";
-      currentModelTag.className = "model-tag cloud-badge";
-      if (heroTitle) heroTitle.textContent = "El GPT Qwen 3.8 27B";
-      if (heroSubtitle) heroSubtitle.textContent = "Elite Coding and Multilingual Engine. Superior HTML5/CSS3/JS web development & math.";
-    } else if (modelId === "el-gpt-cloud-20b" || modelId === "el-gpt-cloud-llama-8b") {
-      currentModelName.textContent = "El GPT Cloud Fast 20B";
-      currentModelTag.textContent = "⚡ 750 tps Groq";
-      currentModelTag.className = "model-tag cloud-badge";
-      if (heroTitle) heroTitle.textContent = "El GPT Cloud Fast 20B";
-      if (heroSubtitle) heroSubtitle.textContent = "Ultra-high speed 20B model on Groq. Near-instantaneous streaming (750+ tokens/sec) for rapid conversation.";
-    } else if (modelId === "el-gpt-or-nemotron-120b") {
-      currentModelName.textContent = "Nemotron 3 Super 120B";
-      currentModelTag.textContent = "🌐 OpenRouter Free";
-      currentModelTag.className = "model-tag cloud-badge";
-      if (heroTitle) heroTitle.textContent = "Nemotron 3 Super 120B";
-      if (heroSubtitle) heroSubtitle.textContent = "Nvidia 120B Flagship Reasoning Engine hosted free on OpenRouter. High-precision logic, coding & architecture.";
-    } else if (modelId === "el-gpt-or-gemma-26b") {
-      currentModelName.textContent = "Gemma 4 26B (Free)";
-      currentModelTag.textContent = "🌐 OpenRouter Free";
-      currentModelTag.className = "model-tag cloud-badge";
-      if (heroTitle) heroTitle.textContent = "Gemma 4 26B (Free)";
-      if (heroSubtitle) heroSubtitle.textContent = "Google Gemma 26B instruction-tuned model hosted free on OpenRouter. Agile reasoning and full-stack coding.";
-    } else if (modelId === "el-gpt-or-laguna-s") {
-      currentModelName.textContent = "Poolside Laguna S 2.1";
-      currentModelTag.textContent = "🌐 OpenRouter Free";
-      currentModelTag.className = "model-tag cloud-badge";
-      if (heroTitle) heroTitle.textContent = "Poolside Laguna S 2.1";
-      if (heroSubtitle) heroSubtitle.textContent = "Poolside Laguna S 2.1 on OpenRouter. Specialized reasoning and developer assistant with free tier access.";
-    } else if (modelId === "el-gpt-image-flux") {
-      currentModelName.textContent = "FLUX.1 Image Studio";
-      currentModelTag.textContent = "🎨 FLUX.1 Free";
-      currentModelTag.className = "model-tag cloud-badge";
-      if (heroTitle) heroTitle.textContent = "FLUX.1 Image Studio";
-      if (heroSubtitle) heroSubtitle.textContent = "State-of-the-art text-to-image generator powered by FLUX.1. Type any visual description to create high-resolution images for 100% free.";
-      if (chatInput) chatInput.placeholder = "Describe the image you want to create (e.g. 'a cute baby red panda in a bamboo forest, 8k resolution')...";
-    } else if (modelId === "el-gpt-1-8-ultra") {
-      currentModelName.textContent = "El GPT 1.8 Ultra";
-      currentModelTag.textContent = "1B Local MPS";
-      currentModelTag.className = "model-tag ultra-badge";
-      if (heroTitle) heroTitle.textContent = "El GPT 1.8 Ultra";
-      if (heroSubtitle) heroSubtitle.textContent = "1 Billion+ Parameter Flagship Local Neural Network. High RAM & compute load.";
-    } else if (modelId === "el-gpt-1-5-flash") {
-      currentModelName.textContent = "El GPT 1.5 Flash";
-      currentModelTag.textContent = "500M Flash ⚡";
-      currentModelTag.className = "model-tag flash-badge";
-      if (heroTitle) heroTitle.textContent = "El GPT 1.5 Flash";
-      if (heroSubtitle) heroSubtitle.textContent = "Ultra-Low Latency 500M Engine. Instant token streaming and rapid execution.";
-    } else if (modelId === "el-gpt-1-5-pro") {
-      currentModelName.textContent = "El GPT 1.5 Pro";
-      currentModelTag.textContent = "500M Pro";
-      currentModelTag.className = "model-tag pro-badge";
-      if (heroTitle) heroTitle.textContent = "El GPT 1.5 Pro";
-      if (heroSubtitle) heroSubtitle.textContent = "500 Million Parameter Neural Network with Persistent Memory, HTML/CSS Web Engine, & Math Reasoning.";
-    } else if (modelId === "el-gpt-1-0-pro") {
-      currentModelName.textContent = "El GPT 1.0 Pro";
-      currentModelTag.textContent = "135M Compact";
-      currentModelTag.className = "model-tag smart-badge";
-      if (heroTitle) heroTitle.textContent = "El GPT 1.0 Pro";
-      if (heroSubtitle) heroSubtitle.textContent = "Compact 135M Parameter Model pre-trained on 2T tokens for lightweight chat.";
-    } else if (modelId === "el-gpt-scratch") {
-      currentModelName.textContent = "El GPT Scratch";
-      currentModelTag.textContent = "Custom 10M–1B";
-      currentModelTag.className = "model-tag train-badge";
-      if (heroTitle) heroTitle.textContent = "El GPT Scratch";
-      if (heroSubtitle) heroSubtitle.textContent = "Your custom PyTorch Transformer decoder trained locally in the Training Studio.";
+    if (modelId === "el-gpt-image-flux") {
+      if (chatInput) chatInput.placeholder = "Describe the image you want to create (e.g. 'a cute baby red panda in a bamboo forest')...";
+    } else {
+      if (chatInput) chatInput.placeholder = "Message El GPT... (or type /image to create art)";
     }
   }
 
   function setupEventListeners() {
-    // Model Selector Dropdown
-    modelSelectBtn?.addEventListener("click", (e) => {
+    // In-Chat Model Picker Pill & Popover
+    modelPillBtn?.addEventListener("click", (e) => {
       e.stopPropagation();
-      modelDropdownMenu.classList.toggle("hidden");
-      modelSelectBtn.classList.toggle("open");
+      modelPopover?.classList.toggle("hidden");
+      modelPillBtn.classList.toggle("open");
     });
 
-    document.querySelectorAll(".model-option").forEach((opt) => {
+    document.querySelectorAll(".model-popover-item").forEach((opt) => {
       opt.addEventListener("click", (e) => {
         e.stopPropagation();
         const model = opt.getAttribute("data-model");
         if (model) {
           updateModelUI(model);
-          modelDropdownMenu.classList.add("hidden");
-          modelSelectBtn.classList.remove("open");
+          modelPopover?.classList.add("hidden");
+          modelPillBtn?.classList.remove("open");
         }
       });
     });
 
     document.addEventListener("click", () => {
-      modelDropdownMenu?.classList.add("hidden");
-      modelSelectBtn?.classList.remove("open");
+      modelPopover?.classList.add("hidden");
+      modelPillBtn?.classList.remove("open");
     });
 
-    // Deep Reasoning / Fast Mode Toggle
+    // Settings Modal Open / Close
+    const openSettings = () => {
+      settingsModal?.classList.remove("hidden");
+      checkCloudStatus();
+    };
+    const closeSettings = () => {
+      settingsModal?.classList.add("hidden");
+    };
+
+    headerSettingsBtn?.addEventListener("click", openSettings);
+    openSettingsSidebarBtn?.addEventListener("click", openSettings);
+    closeSettingsBtn?.addEventListener("click", closeSettings);
+    settingsModal?.addEventListener("click", (e) => {
+      if (e.target === settingsModal) closeSettings();
+    });
+
+    // Settings Navigation Tabs
+    document.querySelectorAll(".settings-tab-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".settings-tab-btn").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        const tab = btn.getAttribute("data-tab");
+        document.querySelectorAll(".settings-tab-pane").forEach((p) => p.classList.add("hidden"));
+        if (tab === "keys") document.getElementById("paneKeys")?.classList.remove("hidden");
+        else if (tab === "memory") {
+          document.getElementById("paneMemory")?.classList.remove("hidden");
+          loadMemories();
+        } else if (tab === "general") {
+          document.getElementById("paneGeneral")?.classList.remove("hidden");
+        }
+      });
+    });
+
+    // Settings Deep Reasoning Switch
+    settingsDeepReasoningToggle?.addEventListener("change", (e) => {
+      isDeepReasoning = e.target.checked;
+      modeToggleBtn?.classList.toggle("active", isDeepReasoning);
+      if (modeLabel) modeLabel.textContent = isDeepReasoning ? "Deep Reasoning" : "Fast Stream";
+    });
+
+    // Deep Reasoning / Fast Mode Toggle in input toolbar
     modeToggleBtn?.addEventListener("click", () => {
       isDeepReasoning = !isDeepReasoning;
       modeToggleBtn.classList.toggle("active", isDeepReasoning);
-      if (isDeepReasoning) {
-        modeLabel.textContent = "🧠 Deep Reasoning";
-      } else {
-        modeLabel.textContent = "⚡ Fast Stream";
+      if (settingsDeepReasoningToggle) settingsDeepReasoningToggle.checked = isDeepReasoning;
+      if (modeLabel) modeLabel.textContent = isDeepReasoning ? "Deep Reasoning" : "Fast Stream";
+    });
+
+    // Settings Clear All Chats
+    settingsClearChatsBtn?.addEventListener("click", () => {
+      if (confirm("Are you sure you want to delete all conversations? This cannot be undone.")) {
+        conversations = [];
+        saveConversations();
+        startNewChat();
+        closeSettings();
       }
     });
+
+    // Settings Export Chats
+    settingsExportBtn?.addEventListener("click", exportCurrentChat);
 
     // Input resizing, stats & sending
     chatInput.addEventListener("input", () => {
@@ -326,25 +282,6 @@ document.addEventListener("DOMContentLoaded", () => {
           chatInput.value = prompt;
           chatInput.dispatchEvent(new Event("input"));
           submitMessage();
-        }
-      });
-    });
-
-    // Prompt Library Modal
-    openPromptsBtn?.addEventListener("click", () => promptLibraryModal?.classList.remove("hidden"));
-    closePromptsBtn?.addEventListener("click", () => promptLibraryModal?.classList.add("hidden"));
-    promptLibraryModal?.addEventListener("click", (e) => {
-      if (e.target === promptLibraryModal) promptLibraryModal.classList.add("hidden");
-    });
-
-    document.querySelectorAll(".prompt-template-card").forEach((card) => {
-      card.addEventListener("click", () => {
-        const prompt = card.getAttribute("data-prompt");
-        if (prompt) {
-          chatInput.value = prompt;
-          chatInput.dispatchEvent(new Event("input"));
-          promptLibraryModal?.classList.add("hidden");
-          chatInput.focus();
         }
       });
     });
@@ -501,17 +438,6 @@ document.addEventListener("DOMContentLoaded", () => {
         openRouterApiKeyInput.type = openRouterApiKeyInput.type === "password" ? "text" : "password";
       }
     });
-
-    // Studio Modal
-    openStudioBtn?.addEventListener("click", () => openStudio());
-    quickTrainBtn?.addEventListener("click", () => openStudio());
-    closeStudioBtn?.addEventListener("click", () => closeStudio());
-    studioModal?.addEventListener("click", (e) => {
-      if (e.target === studioModal) closeStudio();
-    });
-
-    startTrainBtn?.addEventListener("click", launchTraining);
-    stopTrainBtn?.addEventListener("click", haltTraining);
   }
 
   function startNewChat() {
@@ -1106,6 +1032,60 @@ document.addEventListener("DOMContentLoaded", () => {
 
       parentWrapper.appendChild(actionsBar);
     }
+
+    // Image fallback handling and direct blob download
+    bubbleElement.querySelectorAll("img.generated-image, .message-bubble img").forEach((img) => {
+      if (img.dataset.bound) return;
+      img.dataset.bound = "true";
+
+      img.addEventListener("error", () => {
+        const fallback = img.getAttribute("data-fallback");
+        if (fallback && img.src !== fallback) {
+          console.warn("Primary image failed, switching to fallback...");
+          img.src = fallback;
+        } else {
+          const prompt = img.alt || "creative art";
+          img.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=turbo&width=768&height=768&nologo=true&seed=${Date.now()}`;
+        }
+      });
+    });
+
+    bubbleElement.querySelectorAll(".download-image-btn").forEach((btn) => {
+      if (btn.dataset.bound) return;
+      btn.dataset.bound = "true";
+
+      btn.addEventListener("click", async (e) => {
+        e.preventDefault();
+        const url = btn.getAttribute("data-url");
+        const prompt = btn.getAttribute("data-prompt") || "artwork";
+        const filename = `el-gpt-${prompt.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 30)}.jpg`;
+        const originalText = btn.innerHTML;
+
+        btn.textContent = "⏳ Downloading...";
+        try {
+          const resp = await fetch(url);
+          if (!resp.ok) throw new Error("HTTP error " + resp.status);
+          const blob = await resp.blob();
+          if (blob.type.includes("json") || blob.type.includes("text")) {
+            throw new Error("Invalid image blob received");
+          }
+          const blobUrl = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = blobUrl;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+          btn.textContent = "✅ Downloaded!";
+          setTimeout(() => (btn.innerHTML = originalText), 2500);
+        } catch (err) {
+          console.warn("Direct blob download failed, opening direct image:", err);
+          window.open(url, "_blank");
+          btn.innerHTML = originalText;
+        }
+      });
+    });
   }
 
   function openLivePreview(htmlContent) {
@@ -1334,19 +1314,15 @@ document.addEventListener("DOMContentLoaded", () => {
       const estTokens = Math.max(tokenChunkCount, Math.ceil(fullResponse.length / 4));
       const tokSpeed = (estTokens / Math.max(parseFloat(elapsedSec), 0.1)).toFixed(1);
 
-      let displayModelName = "El GPT";
-      if (currentModelId === "el-gpt-cloud-120b" || currentModelId === "el-gpt-cloud-llama-70b") displayModelName = "Cloud 120B ⚡";
-      else if (currentModelId === "el-gpt-cloud-qwen-27b" || currentModelId === "el-gpt-cloud-qwen-32b") displayModelName = "Qwen 27B ⚡";
-      else if (currentModelId === "el-gpt-cloud-20b" || currentModelId === "el-gpt-cloud-llama-8b") displayModelName = "Fast 20B ⚡";
-      else if (currentModelId === "el-gpt-or-nemotron-120b") displayModelName = "Nemotron 120B 🌐";
-      else if (currentModelId === "el-gpt-or-gemma-26b") displayModelName = "Gemma 26B 🌐";
-      else if (currentModelId === "el-gpt-or-laguna-s") displayModelName = "Laguna S 🌐";
-      else if (currentModelId === "el-gpt-image-flux") displayModelName = "FLUX.1 🎨";
-      else if (currentModelId === "el-gpt-1-8-ultra") displayModelName = "1.54B Ultra (Local)";
-      else if (currentModelId === "el-gpt-1-5-pro") displayModelName = "500M Pro (Local)";
-      else if (currentModelId === "el-gpt-1-5-flash") displayModelName = "500M Flash (Local)";
-      else if (currentModelId === "el-gpt-1-0-pro") displayModelName = "135M Compact (Local)";
-      else displayModelName = "Scratch (Local)";
+      let displayModelName = "Auto ✨";
+      if (currentModelId === "el-gpt-cloud-120b" || currentModelId === "el-gpt-cloud-llama-70b") displayModelName = "Auto ✨";
+      else if (currentModelId === "el-gpt-cloud-qwen-27b" || currentModelId === "el-gpt-cloud-qwen-32b") displayModelName = "Coding 💻";
+      else if (currentModelId === "el-gpt-cloud-20b" || currentModelId === "el-gpt-cloud-llama-8b") displayModelName = "Fast ⚡";
+      else if (currentModelId === "el-gpt-or-nemotron-120b") displayModelName = "Smart 🧠";
+      else if (currentModelId === "el-gpt-or-gemma-26b") displayModelName = "Smart 🧠";
+      else if (currentModelId === "el-gpt-or-laguna-s") displayModelName = "Smart 🧠";
+      else if (currentModelId === "el-gpt-image-flux") displayModelName = "Image Creator 🎨";
+      else displayModelName = "Auto ✨";
 
       const telemetry = {
         modelName: displayModelName,

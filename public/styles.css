@@ -2143,44 +2143,404 @@ canvas {
   color: #e2e8f0;
 }
 
-/* ─── FLUX.1 Generated Image Styles ─── */
-.message-bubble img {
+/* ─── Modern Minimal Header & Brand ─── */
+.brand-title-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brand-spark {
+  font-size: 18px;
+  background: linear-gradient(135deg, #a78bfa, #38bdf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.brand-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+}
+
+/* ─── In-Chat Model Picker Pill & Popover ─── */
+.model-picker-container {
+  position: relative;
+  display: inline-block;
+}
+
+.model-pill-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.model-pill-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.24);
+  transform: translateY(-1px);
+}
+
+.model-pill-arrow {
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+}
+
+.model-pill-btn.open .model-pill-arrow {
+  transform: rotate(180deg);
+}
+
+.model-popover {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  width: 320px;
+  background: #18181f;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  padding: 8px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  z-index: 100;
+  animation: popoverFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes popoverFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.model-popover.hidden {
+  display: none;
+}
+
+.model-popover-header {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+  padding: 6px 10px 8px;
+}
+
+.model-popover-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.model-popover-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.model-popover-item.active {
+  background: rgba(139, 92, 246, 0.14);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.popover-item-icon {
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.popover-item-info {
+  flex: 1;
+}
+
+.popover-item-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.popover-item-title strong {
+  font-size: 13.5px;
+  color: var(--text-primary);
+}
+
+.popover-item-info p {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  line-height: 1.35;
+  margin: 0;
+}
+
+.popover-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+
+.popover-badge.img-badge {
+  background: rgba(236, 72, 153, 0.18);
+  color: #f472b6;
+}
+
+/* ─── Sidebar Nav Button ─── */
+.sidebar-nav-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 10px;
+  text-align: left;
+}
+
+.sidebar-nav-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-hover);
+}
+
+.sidebar-btn-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.07);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.sidebar-btn-info strong {
   display: block;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sidebar-btn-info span {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ─── Unified Settings Modal ─── */
+.settings-modal-card {
+  max-width: 580px;
+}
+
+.settings-nav-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 10px 20px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.settings-tab-btn {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 8px 14px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.settings-tab-btn:hover {
+  color: var(--text-primary);
+}
+
+.settings-tab-btn.active {
+  color: #a78bfa;
+  border-bottom-color: #a78bfa;
+}
+
+.settings-tab-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.settings-tab-pane.hidden {
+  display: none;
+}
+
+.settings-pane-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.settings-row-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+}
+
+.settings-row-info strong {
+  display: block;
+  font-size: 13.5px;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.settings-row-info span {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.settings-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 4px 0;
+}
+
+.field-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.field-label-row label {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.free-key-link {
+  font-size: 11.5px;
+  color: #38bdf8;
+  text-decoration: none;
+}
+
+.free-key-link:hover {
+  text-decoration: underline;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(255, 255, 255, 0.15);
+  transition: .2s;
+  border-radius: 24px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .2s;
+  border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+  background-color: #8b5cf6;
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(20px);
+}
+
+.danger-btn {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #f87171;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.danger-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: #ef4444;
+}
+
+/* ─── Image Bubble & Direct Download Button ─── */
+.image-bubble-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 14px 0 10px;
+}
+
+.generated-image {
   max-width: 100%;
   width: 512px;
   max-height: 512px;
-  object-fit: cover;
   border-radius: 14px;
-  margin: 14px 0 10px 0;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
   transition: transform 0.25s ease, box-shadow 0.25s ease;
   cursor: pointer;
 }
 
-.message-bubble img:hover {
+.generated-image:hover {
   transform: translateY(-2px) scale(1.01);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(236, 72, 153, 0.4);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(236, 72, 153, 0.4);
 }
 
-.message-bubble a[href*="pollinations.ai"] {
+.image-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.download-image-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 7px 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 8px;
   color: #f472b6;
   font-size: 12.5px;
-  font-weight: 500;
-  text-decoration: none;
+  font-weight: 600;
+  cursor: pointer;
   transition: all 0.2s ease;
-  margin-top: 4px;
 }
 
-.message-bubble a[href*="pollinations.ai"]:hover {
-  background: rgba(236, 72, 153, 0.15);
-  border-color: rgba(236, 72, 153, 0.4);
+.download-image-btn:hover {
+  background: rgba(236, 72, 153, 0.18);
+  border-color: rgba(236, 72, 153, 0.45);
   color: #fbcfe8;
   transform: translateY(-1px);
 }
