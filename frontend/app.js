@@ -205,6 +205,13 @@ document.addEventListener("DOMContentLoaded", () => {
       currentModelTag.className = "model-tag cloud-badge";
       if (heroTitle) heroTitle.textContent = "Poolside Laguna S 2.1";
       if (heroSubtitle) heroSubtitle.textContent = "Poolside Laguna S 2.1 on OpenRouter. Specialized reasoning and developer assistant with free tier access.";
+    } else if (modelId === "el-gpt-image-flux") {
+      currentModelName.textContent = "FLUX.1 Image Studio";
+      currentModelTag.textContent = "🎨 FLUX.1 Free";
+      currentModelTag.className = "model-tag cloud-badge";
+      if (heroTitle) heroTitle.textContent = "FLUX.1 Image Studio";
+      if (heroSubtitle) heroSubtitle.textContent = "State-of-the-art text-to-image generator powered by FLUX.1. Type any visual description to create high-resolution images for 100% free.";
+      if (chatInput) chatInput.placeholder = "Describe the image you want to create (e.g. 'a cute baby red panda in a bamboo forest, 8k resolution')...";
     } else if (modelId === "el-gpt-1-8-ultra") {
       currentModelName.textContent = "El GPT 1.8 Ultra";
       currentModelTag.textContent = "1B Local MPS";
@@ -1334,6 +1341,7 @@ document.addEventListener("DOMContentLoaded", () => {
       else if (currentModelId === "el-gpt-or-nemotron-120b") displayModelName = "Nemotron 120B 🌐";
       else if (currentModelId === "el-gpt-or-gemma-26b") displayModelName = "Gemma 26B 🌐";
       else if (currentModelId === "el-gpt-or-laguna-s") displayModelName = "Laguna S 🌐";
+      else if (currentModelId === "el-gpt-image-flux") displayModelName = "FLUX.1 🎨";
       else if (currentModelId === "el-gpt-1-8-ultra") displayModelName = "1.54B Ultra (Local)";
       else if (currentModelId === "el-gpt-1-5-pro") displayModelName = "500M Pro (Local)";
       else if (currentModelId === "el-gpt-1-5-flash") displayModelName = "500M Flash (Local)";

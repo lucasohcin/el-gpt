@@ -2143,3 +2143,45 @@ canvas {
   color: #e2e8f0;
 }
 
+/* ─── FLUX.1 Generated Image Styles ─── */
+.message-bubble img {
+  display: block;
+  max-width: 100%;
+  width: 512px;
+  max-height: 512px;
+  object-fit: cover;
+  border-radius: 14px;
+  margin: 14px 0 10px 0;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  cursor: pointer;
+}
+
+.message-bubble img:hover {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(236, 72, 153, 0.4);
+}
+
+.message-bubble a[href*="pollinations.ai"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #f472b6;
+  font-size: 12.5px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  margin-top: 4px;
+}
+
+.message-bubble a[href*="pollinations.ai"]:hover {
+  background: rgba(236, 72, 153, 0.15);
+  border-color: rgba(236, 72, 153, 0.4);
+  color: #fbcfe8;
+  transform: translateY(-1px);
+}
+

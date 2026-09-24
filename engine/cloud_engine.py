@@ -77,6 +77,17 @@ CLOUD_MODELS = {
         "max_tokens": 4096,
     },
 
+    # ─── Free Image Studio (FLUX.1) ───
+    "el-gpt-image-flux": {
+        "provider": "image",
+        "api_model": "flux",
+        "name": "FLUX.1 Image Studio",
+        "tag": "🎨 Free Image AI",
+        "badge": "FLUX.1 Free",
+        "description": "State-of-the-art text-to-image generator powered by FLUX.1. Create stunning art, photos, 3D renders & concept art for 100% free.",
+        "max_tokens": 1024,
+    },
+
     # ─── Backwards-Compatible Aliases ───
     "el-gpt-cloud-llama-70b": {
         "provider": "groq",
@@ -293,7 +304,37 @@ class CloudEngine:
         model_info = CLOUD_MODELS.get(model_id, CLOUD_MODELS["el-gpt-cloud-120b"])
         provider = model_info.get("provider", "groq")
 
-        # Resolve primary key
+        # 1. FLUX.1 Image Generation Route (Zero API Key Needed, 100% Free)
+        if provider == "image" or model_id == "el-gpt-image-flux":
+            from .image_engine import generate_image, clean_image_prompt
+            last_prompt = messages[-1].get("content", "") if messages else "A futuristic neon dreamscape"
+            clean = clean_image_prompt(last_prompt)
+            img_result = generate_image(clean or last_prompt)
+            img_url = img_result["image_url"]
+
+            yield f"🎨 **Generated with FLUX.1 Image Studio**:\n\n"
+            yield f"> *\"{clean}\"*\n\n"
+            yield f"![{clean}]({img_url})\n\n"
+            yield f"[⬇️ Download Image]({img_url}) • *1024×1024 • FLUX.1 Model • 100% Free*"
+            return
+
+        # 2. Universal /image command trigger from any model
+        if messages:
+            last_text = messages[-1].get("content", "").strip()
+            if last_text.lower().startswith("/image ") or last_text.lower().startswith("/img "):
+                from .image_engine import generate_image, clean_image_prompt
+                prompt_text = re.sub(r"^/(image|img)\s+", "", last_text, flags=re.IGNORECASE).strip()
+                clean = clean_image_prompt(prompt_text)
+                img_result = generate_image(clean or prompt_text)
+                img_url = img_result["image_url"]
+
+                yield f"🎨 **Generated with FLUX.1 Image Studio**:\n\n"
+                yield f"> *\"{clean}\"*\n\n"
+                yield f"![{clean}]({img_url})\n\n"
+                yield f"[⬇️ Download Image]({img_url}) • *1024×1024 • FLUX.1 Model • 100% Free*"
+                return
+
+        # Resolve primary key for text models
         resolved_key = get_api_key(api_key, provider=provider)
 
         if not resolved_key:

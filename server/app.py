@@ -131,6 +131,24 @@ class MemoryAddRequest(BaseModel):
     memory: str
 
 
+class ImageGenRequest(BaseModel):
+    prompt: str
+    width: int = Field(default=1024, ge=256, le=2048)
+    height: int = Field(default=1024, ge=256, le=2048)
+    model: str = Field(default="flux")
+
+
+@app.post("/api/image")
+@app.post("/api/image/")
+@app.post("/image")
+@app.post("/image/")
+async def generate_image_endpoint(req: ImageGenRequest):
+    """Generates an image using FLUX.1 (100% Free)."""
+    from engine.image_engine import generate_image
+    result = generate_image(req.prompt, width=req.width, height=req.height, model=req.model)
+    return result
+
+
 # Explicit OPTIONS preflight handler covering all possible paths
 @app.options("/api/chat")
 @app.options("/api/chat/")
